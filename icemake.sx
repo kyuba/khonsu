@@ -1,0 +1,42 @@
+(library "khonsu" libcurie
+  (name "Khonsu")
+  (description "Web Framework")
+  (version "1")
+  (url "http://kyuba.org/")
+
+  (code "relay" "khonsu")
+
+  (headers
+        "relay"))
+
+(programme "khonsu-backend" libcurie
+  (name "Khonsu Server")
+  (description "Basic Server")
+  (version "1")
+  (url "http://kyuba.org/")
+
+  (libraries "duat" "khonsu")
+
+  (code "backend"))
+
+(programme "khonsu-server" libcurie
+  (name "Khonsu Server")
+  (description "Basic Server")
+  (version "1")
+  (url "http://kyuba.org/")
+
+  (libraries "duat" "khonsu")
+
+  (code "server")
+
+  (data "khonsu" "khonsu.sx"))
+
+(programme "tao" libcurie
+  (name "Tao")
+  (description "XHTML Output")
+  (version "1")
+  (url "http://kyuba.org/")
+
+  (libraries "duat" "khonsu")
+
+  (code "tao"))

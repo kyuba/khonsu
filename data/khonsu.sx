@@ -1,0 +1,3 @@
+(chain "khonsu-backend" "tao")
+
+(root "/var/www/htdocs")
