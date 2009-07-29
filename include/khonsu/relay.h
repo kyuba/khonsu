@@ -35,14 +35,16 @@ extern "C" {
 
 #include <curie/sexpr.h>
 
-void  relay_spawn_sub (sexpr configuration);
-void  relay_sub (const char *path);
-sexpr relay_get_sub   (const char *path);
+void relay_spawn (sexpr configuration);
+void relay_sub   (sexpr request);
 
 define_symbol (sym_Content_Type,             "Content-Type");
 define_symbol (sym_text_x_s_expression_data, "text/x-s-expression-data");
-define_symbol (sym_chain,                    "chain");
+define_symbol (sym_pipeline,                 "pipeline");
 define_symbol (sym_root,                     "root");
+define_symbol (sym_request,                  "request");
+define_symbol (sym_reply,                    "reply");
+define_symbol (sym_configure,                "configure");
 
 #ifdef __cplusplus
 }

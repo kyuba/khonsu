@@ -26,7 +26,16 @@
  * THE SOFTWARE.
 */
 
+#include <khonsu/khonsu.h>
+#include <curie/multiplex.h>
+
 int cmain ()
 {
+    initialise_khonsu ();
+
+    kho_debug (make_string ("meh"));
+
+    while (multiplex () != mx_nothing_to_do);
+
     return 0;
 }

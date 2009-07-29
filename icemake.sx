@@ -15,7 +15,7 @@
   (version "1")
   (url "http://kyuba.org/")
 
-  (libraries "duat" "khonsu")
+  (libraries "khonsu" "seteh")
 
   (code "backend"))
 
@@ -25,7 +25,7 @@
   (version "1")
   (url "http://kyuba.org/")
 
-  (libraries "duat" "khonsu")
+  (libraries "khonsu" "seteh")
 
   (code "server")
 
@@ -37,6 +37,6 @@
   (version "1")
   (url "http://kyuba.org/")
 
-  (libraries "duat" "khonsu")
+  (libraries "khonsu" "seteh")
 
   (code "tao"))

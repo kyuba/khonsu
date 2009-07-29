@@ -28,23 +28,29 @@
 
 #include <khonsu/relay.h>
 #include <khonsu/khonsu.h>
-#include <duat/9p-client.h>
+#include <curie/exec.h>
+#include <curie/shell.h>
+#include <curie/main.h>
+#include <curie/multiplex.h>
+
+static struct sexpr_io *sxio = (struct sexpr_io *)0;
+
+static void sx_io_read (sexpr sx, struct sexpr_io *io, void *aux)
+{
+}
 
 void relay_spawn (sexpr configuration)
 {
-    static char spawned = 0;
     sexpr target = sx_false;
-
-    if (spawned) return;
 
     while (consp (configuration))
     {
         sexpr a  = car (configuration);
         sexpr a1 = car (a);
 
-        if (truep(equalp(a1, sym_chain)))
+        if (truep(equalp(a1, sym_pipeline)))
         {
-            sexpr b1 = cdr (configuration);
+            sexpr b1 = cdr (a);
             sexpr b2 = cdr (b1);
 
             target = car (b1);
@@ -62,13 +68,36 @@ void relay_spawn (sexpr configuration)
         configuration = cdr (configuration);
     }
 
-    spawned = 1;
+    if (stringp (target))
+    {
+        sexpr filename = which (target);
+
+        if (stringp(filename))
+        {
+            const char *f = sx_string (filename);
+            char *p[] = { (char *)f, (char *)0 };
+            struct exec_context *c = execute (0, p, curie_environment);
+
+            switch (c->pid)
+            {
+                case -1:
+                case 0:
+                    sx_write (kho_stdio, filename);
+                    break;
+                default:
+                    sxio = sx_open_io (c->in, c->out);
+
+                    multiplex_add_sexpr (sxio, sx_io_read, (void *)0);
+
+                    sx_write (sxio, cons (sym_configure, kho_configuration));
+                    break;
+            }
+        }
+    }
 }
 
-void relay_sub (const char *path)
+void relay_sub (sexpr request)
 {
-}
-
-sexpr relay_get_sub   (const char *path)
-{
+    lx_eval (cons (sym_reply, cons (make_integer (0), request)),
+             &kho_environment);
 }

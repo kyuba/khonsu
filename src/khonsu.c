@@ -27,41 +27,52 @@
 */
 
 #include <khonsu/khonsu.h>
-#include <duat/9p-server.h>
+#include <khonsu/relay.h>
+#include <seteh/lambda.h>
+#include <curie/multiplex.h>
+#include <curie/gc.h>
+#include <curie/main.h>
 
-static struct io *debug_data_raw;
-static struct sexpr_io *debug_data;
-static struct io *configuration_data_raw;
-static struct sexpr_io *configuration_data;
-static struct dfs *root;
-static sexpr hosted_configuration = sx_end_of_list;
+static sexpr debug      = sx_end_of_list;
+sexpr kho_environment   = sx_end_of_list;
+sexpr kho_configuration = sx_end_of_list;
 
-static void on_root_close(struct d9r_io *io, void *aux)
+struct sexpr_io *kho_stdio;
+
+static void sx_stdio_read (sexpr sx, struct sexpr_io *io, void *aux)
+{
+    lx_eval (sx, &kho_environment);
+}
+
+static sexpr get (sexpr arguments, sexpr *env)
 {
 }
 
-static void on_debug_read
-        (struct d9r_io *io, int_16 tag, struct dfs_file *file, int_64 offset,
-         int_32 length)
+static sexpr reply (sexpr arguments, sexpr *env)
 {
-    if (debug_data_raw->length > offset)
-    {
-        int len = debug_data_raw->length - offset;
-        if (len > 7000) len = 7000;
-
-        d9r_reply_read (io, tag, len, (int_8*)debug_data_raw->buffer + offset);
-    }
-    else
-    {
-        d9r_reply_read (io, tag, 0, (int_8*)"");
-    }
+    sx_write (kho_stdio, arguments);
 }
 
-static void on_cfg_read
-        (struct d9r_io *io, int_16 tag, struct dfs_file *file, int_64 offset,
-         int_32 length)
+static sexpr request (sexpr arguments, sexpr *env)
 {
-    d9r_reply_read (io, tag, 0, (int_8*)"");
+    relay_sub (cdr (arguments));
+    return sx_nonexistent;
+}
+
+static sexpr object (sexpr arguments, sexpr *env)
+{
+}
+
+static sexpr configure (sexpr arguments, sexpr *env)
+{
+    static char s = 0;
+    if (!s)
+    {
+        relay_spawn (arguments);
+        s = 1;
+    }
+
+    return sx_nonexistent;
 }
 
 void initialise_khonsu ()
@@ -70,24 +81,51 @@ void initialise_khonsu ()
 
     if (!initialised)
     {
-        struct dfs_directory *ctl;
+        multiplex_sexpr ();
 
-        multiplex_d9s ();
+        kho_stdio = sx_open_stdio();
 
-        root = dfs_create (on_root_close, (void *)0);
-        ctl  = dfs_mk_directory (root->root, "ctl");
-        (void)dfs_mk_file (ctl, "debug", (char *)0, (int_8*)0, 0, (void *)0,
-                           on_debug_read, (void *)0);
-        (void)dfs_mk_file (ctl, "cfg", (char *)0, (int_8*)0, 0, (void *)0,
-                           on_cfg_read, (void *)0);
+        gc_add_root (&debug);
+        gc_add_root (&kho_configuration);
 
-        debug_data_raw = io_open_special ();
-        debug_data = sx_open_io (io_open_null, debug_data_raw);
-        configuration_data_raw = io_open_special ();
-        configuration_data = sx_open_io (io_open_null, configuration_data_raw);
+        kho_environment = lx_make_environment(sx_end_of_list);
+        kho_environment = lx_environment_bind
+                (kho_environment, sym_get,
+                 lx_foreign_lambda (sym_get, get));
+        kho_environment = lx_environment_bind
+                (kho_environment, sym_reply,
+                 lx_foreign_lambda (sym_reply, reply));
+        kho_environment = lx_environment_bind
+                (kho_environment, sym_request,
+                 lx_foreign_lambda (sym_request, request));
+        kho_environment = lx_environment_bind
+                (kho_environment, sym_object,
+                 lx_foreign_lambda (sym_object, object));
 
-        multiplex_add_d9s_stdio (root);
-        multiplex_add_d9s_socket ("temporary-socket", root);
+        multiplex_add_sexpr (kho_stdio, sx_stdio_read, (void *)0);
+
+        if (curie_argv[1])
+        {
+            struct sexpr_io * i = sx_open_io (io_open_read (curie_argv[1]),
+                                              io_open_null);
+            sexpr r, c = sx_end_of_list;
+
+            while (!eofp (r = sx_read (i)))
+            {
+                if (!nexp (r))
+                {
+                    c = cons (r, c);
+                }
+            }
+
+            relay_spawn (c);
+        }
+        else
+        {
+            kho_environment = lx_environment_bind
+                    (kho_environment, sym_configure,
+                     lx_foreign_lambda (sym_configure, configure));
+        }
 
         initialised = 1;
     }
@@ -95,11 +133,10 @@ void initialise_khonsu ()
 
 void kho_debug (sexpr sx)
 {
-    sx_write (debug_data, sx);
+    debug = cons (sx, debug);
 }
 
 void kho_configure (sexpr sx)
 {
-    hosted_configuration = cons (sx, hosted_configuration);
-    sx_write (configuration_data, sx);
+    kho_configuration = cons (sx, kho_configuration);
 }

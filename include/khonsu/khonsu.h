@@ -35,9 +35,16 @@ extern "C" {
 
 #include <curie/sexpr.h>
 
+extern struct sexpr_io *kho_stdio;
+extern sexpr kho_configuration;
+extern sexpr kho_environment;
+
 void  initialise_khonsu ();
 void  kho_debug (sexpr sx);
 void  kho_configure (sexpr sx);
+
+define_symbol (sym_get,    "get");
+define_symbol (sym_object, "object");
 
 #ifdef __cplusplus
 }
