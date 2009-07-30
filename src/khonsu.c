@@ -50,12 +50,22 @@ static sexpr get (sexpr arguments, sexpr *env)
 
 static sexpr reply (sexpr arguments, sexpr *env)
 {
-    sx_write (kho_stdio, arguments);
+    sexpr rv = sx_end_of_list;
+
+    while (consp(arguments))
+    {
+        rv = cons (lx_eval (car (arguments), &kho_environment), rv);
+        arguments = cdr (arguments);
+    }
+
+    sx_write (kho_stdio, cons (sym_reply, sx_reverse (rv)));
+
+    return sx_nonexistent;
 }
 
 static sexpr request (sexpr arguments, sexpr *env)
 {
-    relay_sub (cdr (arguments));
+    relay_sub (arguments);
     return sx_nonexistent;
 }
 
@@ -82,6 +92,7 @@ void initialise_khonsu ()
     if (!initialised)
     {
         multiplex_sexpr ();
+        initialise_seteh ();
 
         kho_stdio = sx_open_stdio();
 

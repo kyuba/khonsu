@@ -37,6 +37,9 @@ static struct sexpr_io *sxio = (struct sexpr_io *)0;
 
 static void sx_io_read (sexpr sx, struct sexpr_io *io, void *aux)
 {
+/*    sx_write (kho_stdio, sx);*/
+    lx_eval (sx, &kho_environment);
+/*    sx_write (kho_stdio, sx);*/
 }
 
 void relay_spawn (sexpr configuration)
@@ -57,7 +60,7 @@ void relay_spawn (sexpr configuration)
 
             if (consp (b2))
             {
-                kho_configure (car (b2));
+                kho_configure (cons (sym_pipeline, b2));
             }
         }
         else
@@ -82,7 +85,6 @@ void relay_spawn (sexpr configuration)
             {
                 case -1:
                 case 0:
-                    sx_write (kho_stdio, filename);
                     break;
                 default:
                     sxio = sx_open_io (c->in, c->out);
@@ -90,6 +92,8 @@ void relay_spawn (sexpr configuration)
                     multiplex_add_sexpr (sxio, sx_io_read, (void *)0);
 
                     sx_write (sxio, cons (sym_configure, kho_configuration));
+
+                    sx_write (kho_stdio, filename);
                     break;
             }
         }
@@ -98,6 +102,12 @@ void relay_spawn (sexpr configuration)
 
 void relay_sub (sexpr request)
 {
-    lx_eval (cons (sym_reply, cons (make_integer (0), request)),
-             &kho_environment);
+    if (sxio == (struct sexpr_io *)0)
+    {
+        lx_eval (cons (sym_reply, request), &kho_environment);
+    }
+    else
+    {
+        sx_write (sxio, cons (sym_request, request));
+    }
 }

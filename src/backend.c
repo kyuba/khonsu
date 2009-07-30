@@ -28,9 +28,11 @@
 
 #include <khonsu/khonsu.h>
 #include <curie/multiplex.h>
+#include <curie/memory.h>
 
 int cmain ()
 {
+    terminate_on_allocation_errors ();
     initialise_khonsu ();
 
     kho_debug (make_string ("meh"));
