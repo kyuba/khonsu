@@ -27,15 +27,114 @@
 */
 
 #include <khonsu/khonsu.h>
+#include <seteh/lambda.h>
 #include <curie/multiplex.h>
 #include <curie/memory.h>
+#include <curie/filesystem.h>
+
+static sexpr webroot = sx_nonexistent;
+
+void configure_callback (sexpr sx)
+{
+    sexpr a = car (sx);
+
+    if (truep (equalp (a, sym_root)))
+    {
+        webroot = car (cdr (sx));
+    }
+}
+
+static sexpr get (sexpr arguments, sexpr *env)
+{
+    define_string (str_slash, "/");
+    sexpr e = car (arguments),
+          t = sx_join (webroot, str_slash, car (cdr (arguments))),
+          data = sx_end_of_list, r;
+    struct sexpr_io *io;
+
+    if (!environmentp (e))
+    {
+        e = lx_make_environment (sx_end_of_list);
+    }
+
+    if (truep (filep (t)))
+    {
+      get_file:
+        io = sx_open_io (io_open_read (sx_string (t)),
+                         io_open_null);
+
+        while (!eofp (r = sx_read (io)))
+        {
+            if (!nexp (r))
+            {
+                sexpr n = car (r);
+                if (truep (equalp (sym_available_languages, n)))
+                {
+                    e = lx_environment_bind (e, sym_language,
+                                             car (cdr (r)));
+                }
+                else
+                {
+                    data = cons (r, data);
+                }
+            }
+        }
+
+        sx_close_io (io);
+
+        return cons (e, sx_reverse (data));
+    }
+    else
+    {
+        int len = 0, i;
+        const char *ts = sx_string (t);
+        char *tmp;
+        while (ts[len] != (char)0) 
+        {
+            if (ts[len] == '.') i = len;
+            len++;
+        }
+
+        if (i > 0)
+        {
+            len = i;
+            tmp = aalloc (len + 1);
+            for (i = 0; i < len; i++)
+            {
+                tmp[i] = ts[i];
+            }
+            tmp[i] = 0;
+            i++;
+
+            t = make_string (tmp);
+
+            afree (i, tmp);
+
+            if (truep (filep (t)))
+            {
+                e = lx_environment_bind (e, sym_format, make_string (ts + i));
+                goto get_file;
+            }
+        }
+    }
+
+    return cons (sym_object,
+                 cons (cons (sym_error, sym_file_not_found),
+                       sx_end_of_list));
+}
 
 int cmain ()
 {
     terminate_on_allocation_errors ();
+
+    kho_configure_callback = configure_callback;
+
     initialise_khonsu ();
 
-    kho_debug (make_string ("meh"));
+    kho_environment = lx_environment_bind
+            (kho_environment, sym_get, lx_foreign_lambda (sym_get, get));
+
+    kho_debug (make_symbol ("khonsu-backend"));
 
     while (multiplex () != mx_nothing_to_do);
 

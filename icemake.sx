@@ -4,10 +4,10 @@
   (version "1")
   (url "http://kyuba.org/")
 
-  (code "relay" "khonsu")
+  (code "khonsu" "relay")
 
   (headers
-        "relay"))
+        "khonsu"))
 
 (programme "khonsu-backend" libcurie
   (name "Khonsu Server")

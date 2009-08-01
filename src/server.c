@@ -35,7 +35,7 @@ int cmain ()
     terminate_on_allocation_errors ();
     initialise_khonsu ();
 
-    kho_debug (make_string ("meh"));
+    kho_debug (make_symbol ("khonsu-server"));
 
     while (multiplex () != mx_nothing_to_do);
 

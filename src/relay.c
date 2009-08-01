@@ -26,8 +26,8 @@
  * THE SOFTWARE.
 */
 
-#include <khonsu/relay.h>
 #include <khonsu/khonsu.h>
+#include <seteh/lambda.h>
 #include <curie/exec.h>
 #include <curie/shell.h>
 #include <curie/main.h>

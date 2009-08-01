@@ -27,34 +27,61 @@
 */
 
 #include <khonsu/khonsu.h>
-#include <khonsu/relay.h>
 #include <seteh/lambda.h>
 #include <curie/multiplex.h>
 #include <curie/gc.h>
 #include <curie/main.h>
 
-static sexpr debug      = sx_end_of_list;
+static sexpr ddebug     = sx_end_of_list;
 sexpr kho_environment   = sx_end_of_list;
 sexpr kho_configuration = sx_end_of_list;
 
 struct sexpr_io *kho_stdio;
+
+void (*kho_configure_callback)(sexpr) = (void *)0;
 
 static void sx_stdio_read (sexpr sx, struct sexpr_io *io, void *aux)
 {
     lx_eval (sx, &kho_environment);
 }
 
-static sexpr get (sexpr arguments, sexpr *env)
-{
-}
-
 static sexpr reply (sexpr arguments, sexpr *env)
 {
     sexpr rv = sx_end_of_list;
+    sexpr menv = *env;
 
     while (consp(arguments))
     {
-        rv = cons (lx_eval (car (arguments), &kho_environment), rv);
+        sexpr a = car (arguments);
+        if (environmentp (a))
+        {
+            menv = lx_environment_join (menv, a);
+            rv = cons (a, rv);
+        }
+        else
+        {
+            sexpr r = lx_eval (a, &menv);
+            if (consp (r))
+            {
+                sexpr ra = car (r);
+                if (environmentp (ra))
+                {
+                    rv = cons (ra, rv);
+                    for (r = cdr (r); consp (r); r = cdr (r))
+                    {
+                        rv = cons (car (r), rv);
+                    }
+                }
+                else
+                {
+                    rv = cons (r, rv);
+                }
+            }
+            else
+            {
+                rv = cons (r, rv);
+            }
+        }
         arguments = cdr (arguments);
     }
 
@@ -69,8 +96,65 @@ static sexpr request (sexpr arguments, sexpr *env)
     return sx_nonexistent;
 }
 
+static sexpr object_sub (sexpr arguments, sexpr env)
+{
+    if (consp (arguments))
+    {
+        sexpr t = car (arguments), r = sx_end_of_list, tx;
+        if (truep (equalp (t, sym_object)))
+        {
+            arguments = cdr (arguments);
+            t = car (arguments);
+        }
+
+        arguments = cdr (arguments);
+
+        tx = lx_eval (t, &env);
+        if (primitivep (tx))
+        {
+            return lx_eval (cons (tx, arguments), &env);
+        }
+
+        while (consp (arguments))
+        {
+            r = cons (object_sub (car (arguments), env), r);
+            arguments = cdr (arguments);
+        }
+
+        t = object_sub (t, env);
+
+        if (symbolp (t) && !nexp (lx_environment_lookup (env, t)))
+        {
+            return lx_eval (cons (t, sx_reverse (r)), &env);
+        }
+
+        return cons (t, sx_reverse (r));
+    }
+
+    return arguments;
+}
+
 static sexpr object (sexpr arguments, sexpr *env)
 {
+    sexpr r = object_sub (arguments, *env), ra;
+    if (consp (r) && ((ra = car (r)), stringp (ra)))
+    {
+        for (r = cdr (r); consp (r); r = cdr (r))
+        {
+            ra = sx_join (ra, car (r), sx_nil);
+        }
+
+        return ra;
+    }
+    else
+    {
+        return cons (sym_object, r);
+    }
+}
+
+static sexpr debug (sexpr arguments, sexpr *env)
+{
+    return cons (sym_debug, cons (ddebug, arguments));
 }
 
 static sexpr configure (sexpr arguments, sexpr *env)
@@ -96,13 +180,11 @@ void initialise_khonsu ()
 
         kho_stdio = sx_open_stdio();
 
-        gc_add_root (&debug);
+        gc_add_root (&ddebug);
         gc_add_root (&kho_configuration);
+        gc_add_root (&kho_environment);
 
         kho_environment = lx_make_environment(sx_end_of_list);
-        kho_environment = lx_environment_bind
-                (kho_environment, sym_get,
-                 lx_foreign_lambda (sym_get, get));
         kho_environment = lx_environment_bind
                 (kho_environment, sym_reply,
                  lx_foreign_lambda (sym_reply, reply));
@@ -112,6 +194,9 @@ void initialise_khonsu ()
         kho_environment = lx_environment_bind
                 (kho_environment, sym_object,
                  lx_foreign_lambda (sym_object, object));
+        kho_environment = lx_environment_bind
+                (kho_environment, sym_debug,
+                 lx_foreign_lambda (sym_debug, debug));
 
         multiplex_add_sexpr (kho_stdio, sx_stdio_read, (void *)0);
 
@@ -144,10 +229,14 @@ void initialise_khonsu ()
 
 void kho_debug (sexpr sx)
 {
-    debug = cons (sx, debug);
+    ddebug = cons (sx, ddebug);
 }
 
 void kho_configure (sexpr sx)
 {
     kho_configuration = cons (sx, kho_configuration);
+    if (kho_configure_callback != (void *)0)
+    {
+        kho_configure_callback (sx);
+    }
 }

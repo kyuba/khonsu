@@ -38,13 +38,30 @@ extern "C" {
 extern struct sexpr_io *kho_stdio;
 extern sexpr kho_configuration;
 extern sexpr kho_environment;
+extern void (*kho_configure_callback)(sexpr);
 
 void  initialise_khonsu ();
-void  kho_debug (sexpr sx);
+void  kho_debug     (sexpr sx);
 void  kho_configure (sexpr sx);
 
-define_symbol (sym_get,    "get");
-define_symbol (sym_object, "object");
+void relay_spawn    (sexpr configuration);
+void relay_sub      (sexpr request);
+
+define_symbol (sym_Content_Type,             "Content-Type");
+define_symbol (sym_text_x_s_expression_data, "text/x-s-expression-data");
+define_symbol (sym_pipeline,                 "pipeline");
+define_symbol (sym_root,                     "root");
+define_symbol (sym_request,                  "request");
+define_symbol (sym_reply,                    "reply");
+define_symbol (sym_configure,                "configure");
+define_symbol (sym_get,                      "get");
+define_symbol (sym_object,                   "object");
+define_symbol (sym_debug,                    "debug");
+define_symbol (sym_file_not_found,           "file-not-found");
+define_symbol (sym_error,                    "error");
+define_symbol (sym_format,                   "format");
+define_symbol (sym_available_languages,      "available-languages");
+define_symbol (sym_language,                 "language");
 
 #ifdef __cplusplus
 }

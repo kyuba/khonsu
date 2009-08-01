@@ -1,3 +1,4 @@
 (pipeline "tao" "khonsu-backend")
 
-(root "/var/www/htdocs")
+; (root "/var/www/htdocs/")
+(root "data/test/")
