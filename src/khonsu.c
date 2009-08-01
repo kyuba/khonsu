@@ -139,12 +139,7 @@ static sexpr object (sexpr arguments, sexpr *env)
     sexpr r = object_sub (arguments, *env), ra;
     if (consp (r) && ((ra = car (r)), stringp (ra)))
     {
-        for (r = cdr (r); consp (r); r = cdr (r))
-        {
-            ra = sx_join (ra, car (r), sx_nil);
-        }
-
-        return ra;
+        return kho_merge (r);
     }
     else
     {

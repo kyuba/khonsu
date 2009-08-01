@@ -7,4 +7,5 @@
     (if (equal? language "en")
         (formal-paragraph "title (EN)" "lorem ipsum... (EN)")
         (formal-paragraph "title" "lorem ipsum..."))
-    (formal-paragraph "title (common)" "common text 2")))
+    (formal-paragraph "title (common)" "common text 2")
+    (contact blahblubb)))

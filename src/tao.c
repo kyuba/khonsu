@@ -57,26 +57,6 @@ define_symbol (sym_body,              "body");
 
 define_string (str_xhtml,             "xhtml");
 define_string (str_html,              "html");
-define_string (str_nil,               "");
-
-static sexpr tagmerge (sexpr arguments, sexpr pre, sexpr post)
-{
-    sexpr r = str_nil;
-
-    while (consp (arguments))
-    {
-        sexpr n = car (arguments);
-
-        if (stringp (n))
-        {
-            r = sx_join (r, n, str_nil);
-        }
-
-        arguments = cdr (arguments);
-    }
-
-    return sx_join (pre, r, post);
-}
 
 static sexpr paragraph (sexpr arguments, sexpr *env)
 {
@@ -133,27 +113,27 @@ static sexpr page (sexpr arguments, sexpr *env)
 
 static sexpr body (sexpr arguments, sexpr *env)
 {
-    return tagmerge (arguments, str_body_o, str_body_e);
+    return kho_tagmerge (arguments, str_body_o, str_body_e);
 }
 
 static sexpr title (sexpr arguments, sexpr *env)
 {
-    return tagmerge (arguments, str_title_o, str_title_e);
+    return kho_tagmerge (arguments, str_title_o, str_title_e);
 }
 
 static sexpr head (sexpr arguments, sexpr *env)
 {
-    return tagmerge (arguments, str_head_o, str_head_e);
+    return kho_tagmerge (arguments, str_head_o, str_head_e);
 }
 
 static sexpr xhtml (sexpr arguments, sexpr *env)
 {
-    return tagmerge (arguments, str_html_o, str_html_e);
+    return kho_tagmerge (arguments, str_html_o, str_html_e);
 }
 
 static sexpr html (sexpr arguments, sexpr *env)
 {
-    return tagmerge (arguments, str_html_o, str_html_e);
+    return kho_tagmerge (arguments, str_html_o, str_html_e);
 }
 
 int cmain ()

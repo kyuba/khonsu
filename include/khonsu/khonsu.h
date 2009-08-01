@@ -44,6 +44,9 @@ void  initialise_khonsu ();
 void  kho_debug     (sexpr sx);
 void  kho_configure (sexpr sx);
 
+sexpr kho_tagmerge  (sexpr arguments, sexpr pre, sexpr post);
+sexpr kho_merge     (sexpr arguments);
+
 void relay_spawn    (sexpr configuration);
 void relay_sub      (sexpr request);
 
@@ -62,6 +65,8 @@ define_symbol (sym_error,                    "error");
 define_symbol (sym_format,                   "format");
 define_symbol (sym_available_languages,      "available-languages");
 define_symbol (sym_language,                 "language");
+
+define_string (str_nil,                      "");
 
 #ifdef __cplusplus
 }

@@ -1,1 +1,2 @@
 (request 1 (get (ε (language . "en")) "index.xhtml"))
+(request 1 (get #v "index.xhtml"))
