@@ -40,15 +40,18 @@ extern sexpr kho_configuration;
 extern sexpr kho_environment;
 extern void (*kho_configure_callback)(sexpr);
 
-void  initialise_khonsu ();
-void  kho_debug     (sexpr sx);
-void  kho_configure (sexpr sx);
+void  initialise_khonsu     ();
+void  kho_debug             (sexpr sx);
+void  kho_configure         (sexpr sx);
 
-sexpr kho_tagmerge  (sexpr arguments, sexpr pre, sexpr post);
-sexpr kho_merge     (sexpr arguments);
+sexpr kho_tagmerge          (sexpr arguments, sexpr pre, sexpr post);
+sexpr kho_merge             (sexpr arguments);
 
-void relay_spawn    (sexpr configuration);
-void relay_sub      (sexpr request);
+void  kho_register_output   (struct sexpr_io *out);
+void  kho_unregister_output (struct sexpr_io *out);
+
+void  relay_spawn           (sexpr configuration);
+void  relay_sub             (sexpr request);
 
 define_symbol (sym_Content_Type,             "Content-Type");
 define_symbol (sym_text_x_s_expression_data, "text/x-s-expression-data");

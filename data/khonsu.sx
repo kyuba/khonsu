@@ -2,3 +2,5 @@
 
 ; (root "/var/www/htdocs/")
 (root "data/test/")
+
+(socket "khonsu-test-socket")

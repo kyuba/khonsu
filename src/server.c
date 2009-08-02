@@ -27,13 +27,37 @@
 */
 
 #include <khonsu/khonsu.h>
+#include <seteh/lambda.h>
 #include <curie/multiplex.h>
 #include <curie/memory.h>
+#include <curie/network.h>
+
+define_symbol (sym_socket, "socket");
+
+static void on_socket_connect (struct sexpr_io *io, void *aux)
+{
+    kho_register_output (io);
+}
+
+static void configure_callback (sexpr sx)
+{
+    sexpr a = car (sx);
+
+    if (truep (equalp (a, sym_socket)))
+    {
+        sexpr r = car (cdr (sx));
+        multiplex_add_socket_sx (sx_string (r), on_socket_connect, (void *)0);
+    }
+}
 
 int cmain ()
 {
     terminate_on_allocation_errors ();
+
+    kho_configure_callback = configure_callback;
+
     initialise_khonsu ();
+    multiplex_network ();
 
     kho_debug (make_symbol ("khonsu-server"));
 

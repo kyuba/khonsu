@@ -40,3 +40,13 @@
   (libraries "khonsu" "seteh")
 
   (code "tao"))
+
+(programme "khonsu-cgi" libcurie
+  (name "Khonsu CGI")
+  (description "CGI Interface for Khonsu")
+  (version "1")
+  (url "http://kyuba.org/")
+
+  (libraries "seteh")
+
+  (code "cgi"))

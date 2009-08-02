@@ -31,24 +31,39 @@
 #include <curie/multiplex.h>
 #include <curie/gc.h>
 #include <curie/main.h>
+#include <curie/memory.h>
 
-static sexpr ddebug     = sx_end_of_list;
-sexpr kho_environment   = sx_end_of_list;
-sexpr kho_configuration = sx_end_of_list;
+struct stdio_list
+{
+    struct sexpr_io  *io;
+    struct stdio_list *next;
+};
 
-struct sexpr_io *kho_stdio;
-
-void (*kho_configure_callback)(sexpr) = (void *)0;
+static sexpr ddebug                      = sx_end_of_list;
+sexpr kho_environment                    = sx_end_of_list;
+sexpr kho_configuration                  = sx_end_of_list;
+struct sexpr_io *kho_stdio               = (struct sexpr_io *)0;
+void (*kho_configure_callback)(sexpr)    = (void *)0;
+static struct stdio_list *kho_stdio_list = (struct stdio_list *)0;
 
 static void sx_stdio_read (sexpr sx, struct sexpr_io *io, void *aux)
 {
-    lx_eval (sx, &kho_environment);
+    if (eofp (sx))
+    {
+        kho_unregister_output (io);
+    }
+    else
+    {
+        lx_eval (sx, &kho_environment);
+    }
 }
 
 static sexpr reply (sexpr arguments, sexpr *env)
 {
     sexpr rv = sx_end_of_list;
     sexpr menv = *env;
+    struct stdio_list *l = kho_stdio_list;
+    sexpr rp;
 
     while (consp(arguments))
     {
@@ -85,7 +100,13 @@ static sexpr reply (sexpr arguments, sexpr *env)
         arguments = cdr (arguments);
     }
 
-    sx_write (kho_stdio, cons (sym_reply, sx_reverse (rv)));
+    rp = cons (sym_reply, sx_reverse (rv));
+
+    while (l != (struct stdio_list *)0)
+    {
+        sx_write (l->io, rp);
+        l = l->next;
+    }
 
     return sx_nonexistent;
 }
@@ -173,7 +194,7 @@ void initialise_khonsu ()
         multiplex_sexpr ();
         initialise_seteh ();
 
-        kho_stdio = sx_open_stdio();
+        kho_register_output (kho_stdio = sx_open_stdio());
 
         gc_add_root (&ddebug);
         gc_add_root (&kho_configuration);
@@ -192,8 +213,6 @@ void initialise_khonsu ()
         kho_environment = lx_environment_bind
                 (kho_environment, sym_debug,
                  lx_foreign_lambda (sym_debug, debug));
-
-        multiplex_add_sexpr (kho_stdio, sx_stdio_read, (void *)0);
 
         if (curie_argv[1])
         {
@@ -233,5 +252,40 @@ void kho_configure (sexpr sx)
     if (kho_configure_callback != (void *)0)
     {
         kho_configure_callback (sx);
+    }
+}
+
+void kho_register_output (struct sexpr_io *out)
+{
+    static struct memory_pool pool =
+            MEMORY_POOL_INITIALISER(sizeof (struct stdio_list));
+    struct stdio_list *l = get_pool_mem (&pool);
+
+    if (l != (void *)0)
+    {
+        multiplex_add_sexpr (out, sx_stdio_read, (void *)0);
+
+        l->io          = out;
+        l->next        = kho_stdio_list;
+        kho_stdio_list = l;
+    }
+}
+
+void kho_unregister_output (struct sexpr_io *out)
+{
+    struct stdio_list *l  = kho_stdio_list;
+    struct stdio_list **p = &kho_stdio_list;
+
+    while (l != (struct stdio_list *)0)
+    {
+        if (l->io == out)
+        {
+            *p = l->next;
+            free_pool_mem (l);
+            return;
+        }
+
+        p = &(l->next);
+        l = l->next;
     }
 }

@@ -3,9 +3,10 @@
 (object
   (page
     "test page"
-    (formal-paragraph "title (common)" "common text 1" "common text 3")
-    (if (equal? language "en")
-        (formal-paragraph "title (EN)" "lorem ipsum... (EN)")
-        (formal-paragraph "title" "lorem ipsum..."))
+    (formal-paragraph "title (common)" "common text 1" "common text 3 ... "
+      (formal-paragraph "title (sub)" "common text 5" "common text 6"))
+    (? (equal? language "en")
+       (formal-paragraph "title (EN)" "lorem ipsum... (EN)")
+       (formal-paragraph "title" "lorem ipsum..."))
     (formal-paragraph "title (common)" "common text 2")
     (contact blahblubb)))

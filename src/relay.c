@@ -37,9 +37,7 @@ static struct sexpr_io *sxio = (struct sexpr_io *)0;
 
 static void sx_io_read (sexpr sx, struct sexpr_io *io, void *aux)
 {
-/*    sx_write (kho_stdio, sx);*/
     lx_eval (sx, &kho_environment);
-/*    sx_write (kho_stdio, sx);*/
 }
 
 void relay_spawn (sexpr configuration)
@@ -93,7 +91,6 @@ void relay_spawn (sexpr configuration)
 
                     sx_write (sxio, cons (sym_configure, kho_configuration));
 
-                    sx_write (kho_stdio, filename);
                     break;
             }
         }
