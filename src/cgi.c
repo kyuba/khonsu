@@ -40,7 +40,7 @@ define_symbol (sym_get,     "get");
 define_string (str_index,   "index.xhtml");
 
 #define KHONSU_SOCKET_ENVIRONMENT "KHONSU_SOCKET="
-#define SCRIPT_NAME_ENVIRONMENT   "SCRIPT_NAME="
+#define SCRIPT_NAME_ENVIRONMENT   "PATH_INFO="
 #define KHONSU_CGI_IDENTIFIER 10
 
 #define HTTP_STATUS               "Status: "
@@ -72,7 +72,7 @@ static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
             sx = cdr (sx);
             sa = car (sx);
 
-            while (!stringp (sa))
+            while (!stringp (sa) && consp (sx))
             {
                 sx = cdr (sx);
                 sa = car (sx);
@@ -148,22 +148,24 @@ int cmain ()
              ((c = t[j]) != (char)0) && (c == KHONSU_SOCKET_ENVIRONMENT[j]);
              j++);
 
-        if ((j == (sizeof (KHONSU_SOCKET_ENVIRONMENT) - 1)) && (t[0] == 'K'))
+        if ((j == (sizeof (KHONSU_SOCKET_ENVIRONMENT) - 1)) &&
+            (t[0] == KHONSU_SOCKET_ENVIRONMENT[0]))
         {
             socket_path = t + (sizeof (KHONSU_SOCKET_ENVIRONMENT) - 1);
         }
-/*        else
+        else
         {
             for (j = 0;
                  ((c = t[j]) != (char)0) && (c == SCRIPT_NAME_ENVIRONMENT[j]);
                  j++);
 
-            if ((j == (sizeof (SCRIPT_NAME_ENVIRONMENT) - 1)) && (t[0] == 'S'))
+            if ((j == (sizeof (SCRIPT_NAME_ENVIRONMENT) - 1)) &&
+                (t[0] == SCRIPT_NAME_ENVIRONMENT[0]))
             {
                 script_name =
                     make_string (t + (sizeof (SCRIPT_NAME_ENVIRONMENT) - 1));
             }
-        }*/
+        }
 
         i++;
     }
