@@ -43,9 +43,12 @@ define_string (str_index,   "index.xhtml");
 #define SCRIPT_NAME_ENVIRONMENT   "SCRIPT_NAME="
 #define KHONSU_CGI_IDENTIFIER 10
 
+#define HTTP_STATUS               "Status: "
+#define HTTP_200_OK               "200 OK"
 #define HTTP_CONTENT_LENGTH       "Content-Length: "
 #define HTTP_CONTENT_TYPE         "Content-Type: "
 #define HTTP_XHTML_MIME           "application/xhtml+xml"
+#define HTTP_HTML_MIME            "text/html"
 
 #define MAX_NUM_LENGTH            32
 
@@ -87,8 +90,12 @@ static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
 
                 for (n = 0; output[n] != (char)0; n++);
 
+                io_collect (out, HTTP_STATUS, (sizeof (HTTP_STATUS) -1));
+                io_collect (out, HTTP_200_OK, (sizeof (HTTP_200_OK) -1));
+                io_collect (out, "\r\n", 2);
+
                 io_collect (out, HTTP_CONTENT_LENGTH,
-                            sizeof (HTTP_CONTENT_LENGTH));
+                            (sizeof (HTTP_CONTENT_LENGTH) -1));
 
                 k = n;
 
@@ -100,14 +107,13 @@ static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
                 }
 
                 b[l] = ('0' + k);
-                l--;
                 io_collect (out, b + l, (MAX_NUM_LENGTH) - l);
-
                 io_collect (out, "\r\n", 2);
+
                 io_collect (out, HTTP_CONTENT_TYPE,
-                            sizeof (HTTP_CONTENT_TYPE));
+                            (sizeof (HTTP_CONTENT_TYPE) -1));
                 io_collect (out, HTTP_XHTML_MIME,
-                            sizeof (HTTP_XHTML_MIME));
+                            (sizeof (HTTP_XHTML_MIME) -1));
                 io_collect (out, "\r\n\r\n", 4);
 
                 io_write (out, output, n);
@@ -146,7 +152,7 @@ int cmain ()
         {
             socket_path = t + (sizeof (KHONSU_SOCKET_ENVIRONMENT) - 1);
         }
-        else
+/*        else
         {
             for (j = 0;
                  ((c = t[j]) != (char)0) && (c == SCRIPT_NAME_ENVIRONMENT[j]);
@@ -157,7 +163,7 @@ int cmain ()
                 script_name =
                     make_string (t + (sizeof (SCRIPT_NAME_ENVIRONMENT) - 1));
             }
-        }
+        }*/
 
         i++;
     }
