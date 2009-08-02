@@ -39,6 +39,9 @@ define_symbol (sym_get,     "get");
 
 define_string (str_index,   "index.xhtml");
 
+define_string (str_error_transcript_not_possible_xhtml,
+               "/error/transcript-not-possible.xhtml");
+
 #define KHONSU_SOCKET_ENVIRONMENT "KHONSU_SOCKET="
 #define SCRIPT_NAME_ENVIRONMENT   "PATH_INFO="
 #define KHONSU_CGI_IDENTIFIER 10
@@ -56,6 +59,18 @@ static const char *socket_path = "khonsu-socket";
 static struct io *out;
 static sexpr script_name;
 static sexpr id_token;
+static struct sexpr_io *io;
+
+static void request (sexpr sn)
+{
+    id_token = cons (make_integer (KHONSU_CGI_IDENTIFIER), sn);
+
+    sx_write (io, cons (sym_request, cons (id_token,
+                cons (cons (sym_get, cons (sx_nil, cons (sn,
+                            sx_end_of_list))),
+                      sx_end_of_list))));
+
+}
 
 static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
 {
@@ -83,7 +98,11 @@ static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
                 output = sx_string (sa);
             }
 
-            if (output != (const char *)0)
+            if (output == (const char *)0)
+            {
+                request (str_error_transcript_not_possible_xhtml);
+            }
+            else
             {
                 unsigned int n, l = (MAX_NUM_LENGTH - 1), k;
                 char b[MAX_NUM_LENGTH] = { 0 };
@@ -117,9 +136,9 @@ static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
                 io_collect (out, "\r\n\r\n", 4);
 
                 io_write (out, output, n);
-            }
 
-            multiplex_del_sexpr (io);
+                multiplex_del_sexpr (io);
+            }
         }
     }
 }
@@ -128,7 +147,6 @@ int cmain ()
 {
     int i = 0, j;
     char c;
-    struct sexpr_io *io;
 
     terminate_on_allocation_errors ();
 
@@ -170,20 +188,11 @@ int cmain ()
         i++;
     }
 
-    id_token = cons (make_integer (KHONSU_CGI_IDENTIFIER),
-                     script_name);
-
     multiplex_add_io (out, (void *)0, (void *)0, (void *)0);
-
-/*    io = sx_open_stdio ();*/
     io = sx_open_socket (socket_path);
-
-    sx_write (io, cons (sym_request, cons (id_token,
-                    cons (cons (sym_get, cons (sx_nil, cons (script_name,
-                                sx_end_of_list))),
-                          sx_end_of_list))));
-
     multiplex_add_sexpr (io, on_socket_read, (void *)0);
+
+    request (script_name);
 
     while (multiplex () != mx_nothing_to_do);
 

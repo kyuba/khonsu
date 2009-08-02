@@ -1,0 +1,7 @@
+(available-languages "en")
+
+(object
+  (page
+    "File not Found"
+    (paragraph
+       "Sorry, the file you requested seems to have gone out for a smoke.")))

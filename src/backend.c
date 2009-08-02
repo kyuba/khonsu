@@ -32,7 +32,10 @@
 #include <curie/memory.h>
 #include <curie/filesystem.h>
 
-static sexpr webroot = sx_nonexistent;
+define_string (str_error_file_not_found_xhtml, "/error/file-not-found.xhtml");
+
+static sexpr webroot               = sx_nonexistent;
+static sexpr mime_map              = sx_nonexistent;
 
 void configure_callback (sexpr sx)
 {
@@ -41,6 +44,11 @@ void configure_callback (sexpr sx)
     if (truep (equalp (a, sym_root)))
     {
         webroot = car (cdr (sx));
+    }
+    else if (truep (equalp (a, sym_map_extension)))
+    {
+        a = cdr (sx);
+        mime_map = lx_environment_bind (mime_map, car (a), car (cdr (a)));
     }
 }
 
@@ -59,30 +67,8 @@ static sexpr get (sexpr arguments, sexpr *env)
 
     if (truep (filep (t)))
     {
-      get_file:
-        io = sx_open_io (io_open_read (sx_string (t)),
-                         io_open_null);
-
-        while (!eofp (r = sx_read (io)))
-        {
-            if (!nexp (r))
-            {
-                sexpr n = car (r);
-                if (truep (equalp (sym_available_languages, n)))
-                {
-                    e = lx_environment_bind (e, sym_language,
-                                             car (cdr (r)));
-                }
-                else
-                {
-                    data = cons (r, data);
-                }
-            }
-        }
-
-        sx_close_io (io);
-
-        return cons (e, sx_reverse (data));
+        return cons (e, cons (cons (sym_object, cons (sym_verbatim,
+                     cons (t, sx_end_of_list))), sx_end_of_list));
     }
     else
     {
@@ -112,20 +98,64 @@ static sexpr get (sexpr arguments, sexpr *env)
 
             if (truep (filep (t)))
             {
-                e = lx_environment_bind (e, sym_format, make_string (ts + i));
-                goto get_file;
+                sexpr tf = lx_environment_lookup(mime_map,make_string (ts + i));
+                if (!nexp (tf))
+                {
+                    e = lx_environment_bind (e, sym_format, tf);
+
+                    io = sx_open_io (io_open_read (sx_string (t)),io_open_null);
+
+                    while (!eofp (r = sx_read (io)))
+                    {
+                        if (!nexp (r))
+                        {
+                            sexpr n = car (r);
+                            if (truep (equalp (sym_available_languages, n)))
+                            {
+                                e = lx_environment_bind (e, sym_language,
+                                        car (cdr (r)));
+                            }
+                            else
+                            {
+                                data = cons (r, data);
+                            }
+                        }
+                    }
+
+                    sx_close_io (io);
+
+                    return cons (e, sx_reverse (data));
+                }
+                else
+                {
+                    return cons (e, cons (cons (sym_object, cons (sym_verbatim,
+                                 cons (t, sx_end_of_list))), sx_end_of_list));
+                }
             }
         }
     }
 
-    return cons (sym_object,
-                 cons (cons (sym_error, sym_file_not_found),
-                       sx_end_of_list));
+    if (!nexp (lx_environment_lookup (e, sym_error)))
+    {
+        return cons (sym_object,
+                     cons (cons (sym_error, sym_file_not_found),
+                           sx_end_of_list));
+    }
+    else
+    {
+        e = lx_environment_bind (e, sym_error, sym_file_not_found);
+
+        return get (cons (e, cons (str_error_file_not_found_xhtml,
+                    sx_end_of_list)),
+                    env);
+    }
 }
 
 int cmain ()
 {
     terminate_on_allocation_errors ();
+
+    mime_map = lx_make_environment (sx_end_of_list);
 
     kho_configure_callback = configure_callback;
 

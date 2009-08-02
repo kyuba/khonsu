@@ -1,6 +1,6 @@
 (pipeline "tao" "khonsu-backend")
 
-; (root "/var/www/htdocs/")
-(root "data/test/")
+; (root "/var/www/htdocs")
+(root "data/test")
 
 (socket "khonsu-test-socket")

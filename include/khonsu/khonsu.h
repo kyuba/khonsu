@@ -68,6 +68,8 @@ define_symbol (sym_error,                    "error");
 define_symbol (sym_format,                   "format");
 define_symbol (sym_available_languages,      "available-languages");
 define_symbol (sym_language,                 "language");
+define_symbol (sym_map_extension,            "map-extension");
+define_symbol (sym_verbatim,                 "verbatim");
 
 define_string (str_nil,                      "");
 
