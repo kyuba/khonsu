@@ -121,7 +121,8 @@ static sexpr object_sub (sexpr arguments, sexpr env)
 {
     if (consp (arguments))
     {
-        sexpr t = car (arguments), r = sx_end_of_list, tx;
+        sexpr t = car (arguments), r = sx_end_of_list, tx, at;
+
         if (truep (equalp (t, sym_object)))
         {
             arguments = cdr (arguments);
@@ -134,6 +135,16 @@ static sexpr object_sub (sexpr arguments, sexpr env)
         if (primitivep (tx))
         {
             return lx_eval (cons (tx, arguments), &env);
+        }
+
+        at = car (arguments);
+        if (environmentp (at))
+        {
+            arguments = cdr (arguments);
+        }
+        else
+        {
+            at = sx_nonexistent;
         }
 
         while (consp (arguments))
@@ -149,7 +160,14 @@ static sexpr object_sub (sexpr arguments, sexpr env)
             return lx_eval (cons (t, sx_reverse (r)), &env);
         }
 
-        return cons (t, sx_reverse (r));
+        if (!nexp (at))
+        {
+            return cons (t, cons (at, sx_reverse (r)));
+        }
+        else
+        {
+            return cons (t, sx_reverse (r));
+        }
     }
 
     return arguments;

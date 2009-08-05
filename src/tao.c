@@ -68,8 +68,15 @@ static sexpr page (sexpr arguments, sexpr *env)
     {
         if (truep (equalp (format, sym_application_xhtml_p_xml)))
         {
-            sexpr title = car (arguments);
+            sexpr title = car (arguments), at;
             arguments = cdr (arguments);
+
+            if (environmentp (title))
+            {
+                at = title;
+                title = car (arguments);
+                arguments = cdr (arguments);
+            }
 
             return lx_eval
                   (cons (str_xml_declaration, cons (str_doctype_xhtml,

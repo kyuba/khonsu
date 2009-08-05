@@ -56,6 +56,31 @@ static sexpr object (sexpr arguments, sexpr *env)
     {
         r = sx_join (str_lt, t, str_nil);
         arguments = cdr (arguments);
+
+        a = car (arguments);
+        if (environmentp (a))
+        {
+            sexpr tb, tba, tbb;
+            a = lx_environment_alist (a);
+
+            while (consp (a))
+            {
+                tb = car (a);
+                tba = car (tb);
+                tbb = cdr (tb);
+
+                if (symbolp (tba) && stringp (tbb))
+                {
+                    r = sx_join (r, str_space, tba);
+                    r = sx_join (r, str_eqquot, tbb);
+                    r = sx_join (r, str_quot, str_nil);
+                }
+
+                a = cdr (a);
+            }
+
+            arguments = cdr (arguments);
+        }
     }
 
     while (consp (arguments))
