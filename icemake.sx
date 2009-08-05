@@ -41,6 +41,16 @@
 
   (code "tao"))
 
+(programme "tao-xmlise" libcurie
+  (name "Tao XML-ise")
+  (description "S-Expression to XML Converter")
+  (version "1")
+  (url "http://kyuba.org/")
+
+  (libraries "khonsu" "seteh")
+
+  (code "xmlise"))
+
 (programme "khonsu-cgi" libcurie
   (name "Khonsu CGI")
   (description "CGI Interface for Khonsu")
