@@ -34,10 +34,10 @@
 
 define_string (str_error_file_not_found_xhtml, "/error/file-not-found.xhtml");
 
-static sexpr webroot               = sx_nonexistent;
-static sexpr mime_map              = sx_nonexistent;
+static sexpr webroot  = sx_nonexistent;
+static sexpr mime_map = sx_nonexistent;
 
-void configure_callback (sexpr sx)
+static void configure_callback (sexpr sx)
 {
     sexpr a = car (sx);
 
@@ -57,7 +57,7 @@ static sexpr get (sexpr arguments, sexpr *env)
     define_string (str_slash, "/");
     sexpr e = car (arguments),
           t = sx_join (webroot, str_slash, car (cdr (arguments))),
-          data = sx_end_of_list, r;
+          data = sx_end_of_list, r, tje;
     struct sexpr_io *io;
 
     if (!environmentp (e))
@@ -114,6 +114,11 @@ static sexpr get (sexpr arguments, sexpr *env)
                             {
                                 e = lx_environment_bind (e, sym_language,
                                         car (cdr (r)));
+                            }
+                            else if (truep (equalp (sym_object, n)))
+                            {
+                                tje = lx_environment_join (*env, e);
+                                data = cons (lx_eval (r, &tje), data);
                             }
                             else
                             {

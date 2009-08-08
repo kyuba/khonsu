@@ -29,7 +29,9 @@
 #include <khonsu/khonsu.h>
 #include <seteh/lambda.h>
 #include <curie/multiplex.h>
+#include <curie/directory.h>
 #include <curie/memory.h>
+#include <curie/regex.h>
 
 define_string (str_xml_declaration,
   "<?xml version=\"1.1\" encoding=\"utf-8\" ?>\n");
@@ -54,63 +56,339 @@ define_symbol (sym_p,                        "p");
 
 define_symbol (sym_application_xhtml_p_xml,  "application/xhtml+xml");
 
+define_symbol (sym_tao_map_extension,        "tao:map-extension");
+define_symbol (sym_tao_transform,            "tao:transform");
+define_symbol (sym_tao_match,                "tao:match");
+define_symbol (sym_tao_replace,              "tao:replace");
+define_symbol (sym_tao_item,                 "tao:item");
+define_symbol (sym_tao_tail,                 "tao:tail");
+
+define_symbol (sym_tao_profiles,             "tao-profiles");
+define_symbol (sym_tao_themes,               "tao-themes");
+
 define_string (str_xhtml,                    "xhtml");
+define_string (str_undefined_reference,      "undefined reference");
 
-static sexpr paragraph (sexpr arguments, sexpr *env)
+struct transformation
 {
-    return cons (sym_p, arguments);
-}
+    sexpr conditions;
+    sexpr replacements;
+    struct transformation *next;
+};
 
-static sexpr page (sexpr arguments, sexpr *env)
+struct transformation *tao_profiles = (void *)0;
+struct transformation *tao_themes   = (void *)0;
+
+static void tao_add_transformation (struct transformation **t, sexpr sx)
 {
-    sexpr format = lx_environment_lookup (*env, sym_format);
-    if (!nexp (format))
+    struct memory_pool pool
+            = MEMORY_POOL_INITIALISER (sizeof (struct transformation));
+    struct transformation * tr = get_pool_mem (&pool);
+    sexpr c, ca, cd, cond, condx, da;
+
+    if (tr == (void *)0)
     {
-        if (truep (equalp (format, sym_application_xhtml_p_xml)))
-        {
-            sexpr title = car (arguments), at;
-            arguments = cdr (arguments);
-
-            if (environmentp (title))
-            {
-                at = title;
-                title = car (arguments);
-                arguments = cdr (arguments);
-            }
-
-            return lx_eval
-                  (cons (str_xml_declaration, cons (str_doctype_xhtml,
-                       cons (
-                         cons (sym_html,
-                         cons (cons (sym_head,
-                           cons (cons (sym_title, cons (title, sx_end_of_list)),
-                             sx_end_of_list)),
-                           cons (cons (sym_body, cons (cons (sym_h1,
-                                 cons (title, sx_end_of_list)), arguments)),
-                             sx_end_of_list))), sx_end_of_list))),
-                   env);
-        }
+        return;
     }
 
-    return cons (sym_page, arguments);
+    tr->conditions   = sx_end_of_list;
+    tr->replacements = sx_end_of_list;
+    tr->next         = *t;
+
+    while (consp (sx))
+    {
+        c  = car (sx);
+        ca = car (c);
+
+        if (truep (equalp (ca, sym_tao_match)))
+        {
+            da = cdr (c);
+            tr->conditions
+                    = cons (cons (car (da), rx_compile_sx (cdr (da))),
+                            tr->conditions);
+        }
+        else if (truep (equalp (ca, sym_tao_replace)))
+        {
+            cd = cdr (c);
+            cond = car (cd);
+            condx = sx_end_of_list;
+
+            while (consp (cond))
+            {
+                condx = cons (rx_compile_sx (car (cond)), condx);
+
+                cond = cdr (cond);
+            }
+
+            tr->replacements = cons (cons (condx, cdr (cd)), tr->replacements);
+        }
+
+        sx = cdr (sx);
+    }
+
+    tr->replacements = sx_reverse (tr->replacements);
+
+    *t = tr;
+}
+
+static void configure_callback_work (struct transformation **t, sexpr sx)
+{
+    sexpr b = read_directory_sx (sx), d, da;
+    struct sexpr_io *i;
+
+    while (consp (b))
+    {
+        i = sx_open_io (io_open_read(sx_string (car (b))), io_open_null);
+
+        while (!eofp (d = sx_read (i)))
+        {
+            if (consp (d))
+            {
+                da = car (d);
+
+                if (truep (equalp (da, sym_tao_map_extension)))
+                {
+                    kho_configure (cons (sym_map_extension, cdr (d)));
+                }
+                else if (truep (equalp (da, sym_tao_transform)))
+                {
+                    tao_add_transformation (t, cdr (d));
+                }
+            }
+        }
+
+        sx_close_io (i);
+
+        b = cdr (b);
+    }
+}
+
+static void configure_callback (sexpr sx)
+{
+    sexpr a = car (sx);
+
+    if (truep (equalp (a, sym_tao_profiles)))
+    {
+        configure_callback_work (&tao_profiles, car (cdr (sx)));
+    }
+    else if (truep (equalp (a, sym_tao_themes)))
+    {
+        configure_callback_work (&tao_themes, car (cdr (sx)));
+    }
+}
+
+static sexpr apply_replacement (sexpr rx, sexpr node, sexpr path, sexpr env)
+{
+    sexpr c = rx, d = sx_end_of_list, type, e;
+
+    if (!consp (rx))
+    {
+        return rx;
+    }
+
+    type = car (rx);
+    if (symbolp (type))
+    {
+        c = cdr (c);
+    }
+
+    e = car (rx);
+    if (environmentp (e))
+    {
+        c = cdr (c);
+    }
+    else
+    {
+        e = lx_make_environment (sx_end_of_list);
+    }
+
+    while (consp (c))
+    {
+        d = cons (apply_replacement (car (c), node, sx_end_of_list, env), d);
+
+        c = cdr (c);
+    }
+
+    d = sx_reverse (d);
+
+    if (symbolp (type))
+    {
+        if (truep (equalp (sym_tao_tail, type)))
+        {
+            int n = sx_integer (car (cdr (rx))) - 1;
+            c = node;
+
+            while ((n > 0) && consp (c))
+            {
+                c = cdr (c);
+                n--;
+            }
+
+            return c;
+        }
+        else if (truep (equalp (sym_tao_item, type)))
+        {
+            int n = sx_integer (car (cdr (rx))) -1;
+            c = node;
+
+            while ((n > 0) && consp (c))
+            {
+                c = cdr (c);
+                n--;
+            }
+
+            if (consp (c))
+            {
+                return car (c);
+            }
+            else
+            {
+                return str_undefined_reference;
+            }
+        }
+
+        return cons (type, cons (e, d));
+    }
+    else
+    {
+        return d;
+    }
+}
+
+static sexpr object_sub (sexpr arguments, sexpr path, sexpr env)
+{
+    struct transformation *tr = tao_profiles;
+    sexpr c, d, da, db, rc, rx, rcc, pc, type;
+    char good;
+
+    if (!consp (arguments))
+    {
+        return arguments;
+    }
+
+    type = car (arguments);
+
+    if (symbolp (type))
+    {
+        path = cons (make_string (sx_symbol (type)), path);
+        arguments = cdr (arguments);
+    }
+    else
+    {
+        d  = sx_end_of_list;
+        da = arguments;
+
+        while (consp (da))
+        {
+            d  = cons (object_sub (car (da), path, env), d);
+
+            da = cdr (da);
+        }
+
+        return sx_reverse (d);
+    }
+
+    while (tr != (void *)0)
+    {
+        good = 1;
+
+        for (c = tr->conditions; good && consp (c); c = cdr (c))
+        {
+            d  = car (c);
+            da = lx_environment_lookup (env, car (d));
+            db = cdr (d);
+
+            if (!nexp (da))
+            {
+                if (falsep (rx_match_sx (cdr (d), da)))
+                {
+                    good = 0;
+                }
+            }
+        }
+
+        if (good)
+        {
+            c  = tr->replacements;
+            d  = sx_end_of_list;
+
+            for (good = 1; consp (c); (good = 1), (c = cdr (c)))
+            {
+                da = car (c);
+                rc = car (da);
+                pc = path;
+                rx = cdr (da);
+
+/*                sx_write (kho_stdio, cons (sym_reply, rc));
+                sx_write (kho_stdio, cons (sym_reply, pc));
+                sx_write (kho_stdio, cons (sym_reply, rx));*/
+
+                while (good && consp (rc) && consp (pc))
+                {
+                    if (falsep (rx_match_sx (car (rc), car (pc))))
+                    {
+                        good = 0;
+                    }
+
+                    rc = cdr (rc);
+                    pc = cdr (pc);
+                }
+
+                if (consp (rc) && !consp (pc))
+                {
+                    good = 0;
+                }
+
+                if (good)
+                {
+                    c = arguments;
+                    d = sx_end_of_list;
+                    while (consp (c))
+                    {
+                        d = cons (object_sub (car (c), sx_end_of_list, env), d);
+                        c = cdr (c);
+                    }
+
+//                    return sx_reverse (d);
+                    return apply_replacement (rx, sx_reverse (d), path, env);
+                }
+            }
+        }
+
+        tr = tr->next;
+    }
+
+    d  = sx_end_of_list;
+    da = arguments;
+
+    while (consp (da))
+    {
+        d  = cons (object_sub (car (da), path, env), d);
+
+        da = cdr (da);
+    }
+
+    return cons (type, sx_reverse (d));
+}
+
+static sexpr object (sexpr arguments, sexpr *env)
+{
+    return cons (sym_object, object_sub (arguments, sx_end_of_list, *env));
 }
 
 int cmain ()
 {
     terminate_on_allocation_errors ();
 
-    kho_configure (cons (sym_map_extension,
-                   cons (str_xhtml,
-                   cons (sym_application_xhtml_p_xml, sx_end_of_list))));
+    kho_configure_callback = configure_callback;
 
     initialise_khonsu ();
 
+    kho_environment = lx_environment_unbind (kho_environment, sym_object);
+
     kho_environment = lx_environment_bind
-            (kho_environment, sym_paragraph,
-             lx_foreign_lambda (sym_paragraph, paragraph));
-    kho_environment = lx_environment_bind
-            (kho_environment, sym_page,
-             lx_foreign_lambda (sym_page, page));
+            (kho_environment, sym_object,
+             lx_foreign_lambda (sym_object, object));
 
     kho_debug (make_symbol ("tao"));
 
