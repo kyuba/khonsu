@@ -33,29 +33,6 @@
 #include <curie/memory.h>
 #include <curie/regex.h>
 
-define_string (str_xml_declaration,
-  "<?xml version=\"1.1\" encoding=\"utf-8\" ?>\n");
-define_string (str_doctype_xhtml,
-  "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" "
-  "\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n");
-
-define_symbol (sym_formal_paragraph,         "formal-paragraph");
-define_symbol (sym_paragraph,                "paragraph");
-define_symbol (sym_page,                     "page");
-define_symbol (sym_html,                     "html");
-define_symbol (sym_head,                     "head");
-define_symbol (sym_title,                    "title");
-define_symbol (sym_body,                     "body");
-define_symbol (sym_h1,                       "h1");
-define_symbol (sym_h2,                       "h2");
-define_symbol (sym_h3,                       "h3");
-define_symbol (sym_h4,                       "h4");
-define_symbol (sym_h5,                       "h5");
-define_symbol (sym_h6,                       "h6");
-define_symbol (sym_p,                        "p");
-
-define_symbol (sym_application_xhtml_p_xml,  "application/xhtml+xml");
-
 define_symbol (sym_tao_map_extension,        "tao:map-extension");
 define_symbol (sym_tao_transform,            "tao:transform");
 define_symbol (sym_tao_match,                "tao:match");
@@ -66,7 +43,6 @@ define_symbol (sym_tao_tail,                 "tao:tail");
 define_symbol (sym_tao_profiles,             "tao-profiles");
 define_symbol (sym_tao_themes,               "tao-themes");
 
-define_string (str_xhtml,                    "xhtml");
 define_string (str_undefined_reference,      "undefined reference");
 
 struct transformation
@@ -190,16 +166,16 @@ static sexpr apply_replacement (sexpr rx, sexpr node, sexpr path, sexpr env)
     if (symbolp (type))
     {
         c = cdr (c);
-    }
 
-    e = car (rx);
-    if (environmentp (e))
-    {
-        c = cdr (c);
-    }
-    else
-    {
-        e = lx_make_environment (sx_end_of_list);
+        e = car (c);
+        if (environmentp (e))
+        {
+            c = cdr (c);
+        }
+        else
+        {
+            e = lx_make_environment (sx_end_of_list);
+        }
     }
 
     while (consp (c))
@@ -319,10 +295,6 @@ static sexpr object_sub (sexpr arguments, sexpr path, sexpr env)
                 pc = path;
                 rx = cdr (da);
 
-/*                sx_write (kho_stdio, cons (sym_reply, rc));
-                sx_write (kho_stdio, cons (sym_reply, pc));
-                sx_write (kho_stdio, cons (sym_reply, rx));*/
-
                 while (good && consp (rc) && consp (pc))
                 {
                     if (falsep (rx_match_sx (car (rc), car (pc))))
@@ -349,7 +321,6 @@ static sexpr object_sub (sexpr arguments, sexpr path, sexpr env)
                         c = cdr (c);
                     }
 
-//                    return sx_reverse (d);
                     return apply_replacement (rx, sx_reverse (d), path, env);
                 }
             }
