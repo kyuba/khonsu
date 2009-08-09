@@ -34,25 +34,37 @@
 #include <curie/network.h>
 #include <curie/io.h>
 
-define_symbol (sym_request,        "request");
-define_symbol (sym_reply,          "reply");
-define_symbol (sym_get,            "get");
-define_symbol (sym_verbatim,       "verbatim");
-define_symbol (sym_format,         "format");
-define_symbol (sym_error,          "error");
-define_symbol (sym_language,       "language");
-define_symbol (sym_file_not_found, "file-not-found");
+define_symbol (sym_request,         "request");
+define_symbol (sym_reply,           "reply");
+define_symbol (sym_get,             "get");
+define_symbol (sym_post,            "post");
+define_symbol (sym_put,             "put");
+define_symbol (sym_delete,          "delete");
+define_symbol (sym_options,         "options");
+define_symbol (sym_verbatim,        "verbatim");
+define_symbol (sym_format,          "format");
+define_symbol (sym_head,            "head");
+define_symbol (sym_error,           "error");
+define_symbol (sym_language,        "language");
+define_symbol (sym_accept,          "accept");
+define_symbol (sym_accept_language, "accept-language");
+define_symbol (sym_user_agent,      "user-agent");
+define_symbol (sym_method,          "method");
+define_symbol (sym_file_not_found,  "file-not-found");
 
-define_string (str_index,          "index.xhtml");
-define_string (str_nil,            "");
+define_string (str_index,           "index.xhtml");
+define_string (str_nil,             "");
 
 define_string (str_error_transcript_not_possible_xhtml,
-               "/error/transcript-not-possible.xhtml");
-define_string (str_text_plain,
-               "text/plain");
+                                    "/error/transcript-not-possible.xhtml");
+define_string (str_text_plain,      "text/plain");
 
-#define KHONSU_SOCKET_ENVIRONMENT "KHONSU_SOCKET="
-#define SCRIPT_NAME_ENVIRONMENT   "PATH_INFO="
+#define KHONSU_SOCKET_ENVIRONMENT        "KHONSU_SOCKET="
+#define SCRIPT_NAME_ENVIRONMENT          "PATH_INFO="
+#define HTTP_ACCEPT_ENVIRONMENT          "HTTP_ACCEPT="
+#define HTTP_ACCEPT_LANGUAGE_ENVIRONMENT "HTTP_ACCEPT_LANGUAGE="
+#define HTTP_USER_AGENT_ENVIRONMENT      "HTTP_USER_AGENT="
+#define REQUEST_METHOD_ENVIRONMENT       "REQUEST_METHOD="
 #define KHONSU_CGI_IDENTIFIER 10
 
 #define HTTP_STATUS               "Status: "
@@ -61,8 +73,6 @@ define_string (str_text_plain,
 #define HTTP_500_ISE              "500 Internal Server Error"
 #define HTTP_CONTENT_LENGTH       "Content-Length: "
 #define HTTP_CONTENT_TYPE         "Content-Type: "
-#define HTTP_XHTML_MIME           "application/xhtml+xml"
-#define HTTP_HTML_MIME            "text/html"
 
 #define MAX_NUM_LENGTH            32
 
@@ -71,13 +81,15 @@ static struct io *out;
 static sexpr script_name;
 static sexpr id_token;
 static struct sexpr_io *io;
+static sexpr rq_environment;
+static sexpr rq_method;
 
-static void request (sexpr sn)
+static void request (sexpr env, sexpr sn)
 {
     id_token = cons (make_integer (KHONSU_CGI_IDENTIFIER), sn);
 
     sx_write (io, cons (sym_request, cons (id_token,
-                cons (cons (sym_get, cons (sx_nil, cons (sn,
+                cons (cons (rq_method, cons (env, cons (sn,
                             sx_end_of_list))),
                       sx_end_of_list))));
 }
@@ -171,7 +183,8 @@ static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
 
             if (output == (const char *)0)
             {
-                request (str_error_transcript_not_possible_xhtml);
+                request (rq_environment,
+                         str_error_transcript_not_possible_xhtml);
             }
             else
             {
@@ -254,10 +267,21 @@ static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
     }
 }
 
+#define env_test_add(j,ev,key,env)\
+        for (j = 0; ((c = t[j]) != (char)0) && (c == ev[j]); j++);\
+        if ((j == (sizeof (ev) - 1)) && (t[0] == ev[0]))\
+        {\
+            env = lx_environment_bind\
+                  (env, key,\
+                   make_string (t + (sizeof (ev) - 1)));\
+            continue;\
+        }\
+
 int cmain ()
 {
-    int i = 0, j;
+    int i, j;
     char c;
+    sexpr env;
 
     terminate_on_allocation_errors ();
 
@@ -268,9 +292,12 @@ int cmain ()
     multiplex_network ();
     initialise_seteh ();
 
+    env = lx_make_environment (sx_end_of_list);
+    rq_method = sym_get;
+
     out = io_open_stdout ();
 
-    while (curie_environment[i] != (char *)0)
+    for (i = 0; curie_environment[i] != (char *)0; i++)
     {
         const char *t = curie_environment[i];
 
@@ -282,29 +309,81 @@ int cmain ()
             (t[0] == KHONSU_SOCKET_ENVIRONMENT[0]))
         {
             socket_path = t + (sizeof (KHONSU_SOCKET_ENVIRONMENT) - 1);
+            continue;
         }
-        else
+
+        for (j = 0;
+             ((c = t[j]) != (char)0) && (c == SCRIPT_NAME_ENVIRONMENT[j]);
+             j++);
+
+        if ((j == (sizeof (SCRIPT_NAME_ENVIRONMENT) - 1)) &&
+            (t[0] == SCRIPT_NAME_ENVIRONMENT[0]))
         {
-            for (j = 0;
-                 ((c = t[j]) != (char)0) && (c == SCRIPT_NAME_ENVIRONMENT[j]);
-                 j++);
-
-            if ((j == (sizeof (SCRIPT_NAME_ENVIRONMENT) - 1)) &&
-                (t[0] == SCRIPT_NAME_ENVIRONMENT[0]))
-            {
-                script_name =
-                    make_string (t + (sizeof (SCRIPT_NAME_ENVIRONMENT) - 1));
-            }
+            script_name =
+                make_string (t + (sizeof (SCRIPT_NAME_ENVIRONMENT) - 1));
+            continue;
         }
 
-        i++;
+        for (j = 0;
+             ((c = t[j]) != (char)0) && (c == REQUEST_METHOD_ENVIRONMENT[j]);
+             j++);
+
+        if ((j == (sizeof (REQUEST_METHOD_ENVIRONMENT) - 1)) &&
+             (t[0] == REQUEST_METHOD_ENVIRONMENT[0]))
+        {
+            const char *b = t + (sizeof (REQUEST_METHOD_ENVIRONMENT) - 1);
+
+            switch (b[0])
+            {
+                case 'P':
+                    if ((b[1] == 'O') && (b[2] == 'S') && (b[3] == 'T') &&
+                         (b[4] == (char)0))
+                    {
+                        rq_method = sym_post;
+                    } else
+                    if ((b[1] == 'U') && (b[2] == 'T') && (b[3] == (char)0))
+                    {
+                        rq_method = sym_put;
+                    }
+                    break;
+                case 'D':
+                    if ((b[1] == 'E') && (b[2] == 'L') && (b[3] == 'E') &&
+                        (b[4] == 'T') && (b[5] == 'E') && (b[6] == (char)0))
+                    {
+                        rq_method = sym_delete;
+                    }
+                    break;
+                case 'H':
+                    if ((b[1] == 'E') && (b[2] == 'A') && (b[3] == 'D') &&
+                         (b[4] == (char)0))
+                    {
+                        rq_method = sym_head;
+                    }
+                    break;
+                case 'O':
+                    if ((b[1] == 'P') && (b[2] == 'T') && (b[3] == 'I') &&
+                        (b[4] == 'O') && (b[5] == 'N') && (b[6] == 'S') &&
+                        (b[7] == (char)0))
+                    {
+                        rq_method = sym_options;
+                    }
+                    break;
+            }
+            continue;
+        }
+
+        env_test_add (j, HTTP_ACCEPT_ENVIRONMENT, sym_accept, env);
+        env_test_add (j, HTTP_ACCEPT_LANGUAGE_ENVIRONMENT, sym_accept_language,
+                      env);
+        env_test_add (j, HTTP_USER_AGENT_ENVIRONMENT, sym_user_agent, env);
     }
 
     multiplex_add_io (out, (void *)0, (void *)0, (void *)0);
     io = sx_open_socket (socket_path);
     multiplex_add_sexpr (io, on_socket_read, (void *)0);
 
-    request (script_name);
+    rq_environment = env;
+    request (env, script_name);
 
     while (multiplex () != mx_nothing_to_do);
 
