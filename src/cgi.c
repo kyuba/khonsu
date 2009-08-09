@@ -111,7 +111,7 @@ static void verbatim_reply (sexpr sxfile)
     do
     {
         r = io_read (in);
-    } while (r != io_end_of_file);
+    } while ((r != io_end_of_file) && (r != io_unrecoverable_error));
 
     write_content_length (in->length);
     io_collect (out, "\r\n", 2);
