@@ -29,7 +29,7 @@
 
   (code "server")
 
-  (data "khonsu" "khonsu.sx"))
+  (data "khonsu" "khonsu.sx" "profiles/xhtml" "themes/default"))
 
 (programme "tao" libcurie
   (name "Tao")

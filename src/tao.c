@@ -156,7 +156,8 @@ static void configure_callback (sexpr sx)
 
 static sexpr apply_replacement (sexpr rx, sexpr node, sexpr path, sexpr env)
 {
-    sexpr c = rx, d = sx_end_of_list, type, e;
+    sexpr c = rx, d = sx_end_of_list, type, t,
+          e = lx_make_environment (sx_end_of_list);
 
     if (!consp (rx))
     {
@@ -168,14 +169,11 @@ static sexpr apply_replacement (sexpr rx, sexpr node, sexpr path, sexpr env)
     {
         c = cdr (c);
 
-        e = car (c);
-        if (environmentp (e))
+        t = car (c);
+        if (environmentp (t))
         {
+            e = t;
             c = cdr (c);
-        }
-        else
-        {
-            e = lx_make_environment (sx_end_of_list);
         }
     }
 

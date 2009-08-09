@@ -8,3 +8,5 @@
 (tao-themes "data/themes/([a-zA-Z]|-)+")
 
 (socket "khonsu-test-socket")
+
+(default-language "en")

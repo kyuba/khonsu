@@ -1,17 +1,11 @@
-(available-languages "en")
-
 (object
   (page
     "test page"
     (h1 (ε (a . "b")) "title (common)")
     (paragraph "common text 1" "common text 3 ... "
       (paragraph "common text 5" "common text 6"))
-    (h2 (? (equal? language "en")
-           "title (EN)"
-           "title"))
+    (h2 "title")
     (paragraph
-       (? (equal? language "en")
-          "lorem ipsum... (EN)"
-          "lorem ipsum..."))
+          "lorem ipsum...")
     (paragraph "common text 2")
     (contact blahblubb)))

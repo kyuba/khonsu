@@ -32,10 +32,20 @@
 #include <curie/memory.h>
 #include <curie/filesystem.h>
 
-define_string (str_error_file_not_found_xhtml, "/error/file-not-found.xhtml");
+#define MAX_HEADER_FIELD_LENGTH 4096
 
-static sexpr webroot  = sx_nonexistent;
-static sexpr mime_map = sx_nonexistent;
+define_symbol (sym_accept_language,  "accept-language");
+define_symbol (sym_Vary,             "Vary");
+define_symbol (sym_default_language, "default-language");
+
+define_string (str_Accept_Language,  "Accept-Language");
+define_string (str_error_file_not_found_xhtml,
+                                     "/error/file-not-found.xhtml");
+define_string (str_dot,              ".");
+
+static sexpr webroot          = sx_nonexistent;
+static sexpr mime_map         = sx_nonexistent;
+static sexpr default_language = sx_nonexistent;
 
 static void configure_callback (sexpr sx)
 {
@@ -50,14 +60,85 @@ static void configure_callback (sexpr sx)
         a = cdr (sx);
         mime_map = lx_environment_bind (mime_map, car (a), car (cdr (a)));
     }
+    else if (truep (equalp (a, sym_default_language)))
+    {
+        default_language = car (cdr (sx));
+    }
+}
+
+static sexpr get_acceptable_languages (sexpr lq)
+{
+    sexpr lcodes = sx_end_of_list;
+    char have_default = 0;
+
+    if (!nexp (lq))
+    {
+        const char *lqs = sx_string (lq);
+        char lqsm [MAX_HEADER_FIELD_LENGTH], semicolon;
+        sexpr n;
+        int i = 0, il = 0;
+
+        while (lqs[i] != (char)0)
+        {
+            lqsm[i] = lqs[i];
+            if (i >= (MAX_HEADER_FIELD_LENGTH - 1)) break;
+            i++;
+        }
+
+        lqsm[i] = (char)0;
+
+        for (i = 0; lqsm[i] != (char)0; i++)
+        {
+            if ((lqsm[i] == ',') || (semicolon = (lqsm[i] == ';')))
+            {
+                lqsm[i] = (char)0;
+
+                n = make_string (lqsm + il);
+                if (!have_default && truep (equalp (n, default_language)))
+                {
+                    have_default = 1;
+                }
+
+                lcodes = cons (n, lcodes);
+
+                if (semicolon)
+                {
+                    i++;
+                    while ((lqsm[i] != 0) && (lqsm[i] != ','))
+                    {
+                        if (lqsm[i] == 0) break;
+                        i++;
+                    }
+                }
+
+                il = i + 1;
+            }
+        }
+
+        if (il < i)
+        {
+            lcodes = cons (make_string (lqsm + il), lcodes);
+        }
+    }
+
+
+    if (!have_default)
+    {
+        lcodes = cons (default_language, lcodes);
+    }
+
+    lcodes = sx_reverse (lcodes);
+
+    return lcodes;
 }
 
 static sexpr get (sexpr arguments, sexpr *env)
 {
     define_string (str_slash, "/");
     sexpr e = car (arguments),
-          t = sx_join (webroot, str_slash, car (cdr (arguments))),
-          data = sx_end_of_list, r, tje;
+          to = car (cdr (arguments)),
+          t = sx_join (webroot, str_slash, to),
+          data = sx_end_of_list, r, tje, lang, lcodes, te, type, tf;
     struct sexpr_io *io;
 
     if (!environmentp (e))
@@ -72,8 +153,8 @@ static sexpr get (sexpr arguments, sexpr *env)
     }
     else
     {
-        int len = 0, i;
-        const char *ts = sx_string (t);
+        int len = 0, i = 0;
+        const char *ts = sx_string (to);
         char *tmp;
         while (ts[len] != (char)0) 
         {
@@ -92,50 +173,64 @@ static sexpr get (sexpr arguments, sexpr *env)
             tmp[i] = 0;
             i++;
 
-            t = make_string (tmp);
+            te   = make_string (tmp);
+            type = make_string (ts + i);
 
             afree (i, tmp);
 
-            if (truep (filep (t)))
+            lcodes = get_acceptable_languages
+                    (lx_environment_lookup (e, sym_accept_language));
+
+            while (consp (lcodes))
             {
-                sexpr tf = lx_environment_lookup(mime_map,make_string (ts + i));
-                if (!nexp (tf))
+                lang = car (lcodes);
+
+                t = sx_join (webroot, str_slash,
+                             sx_join (lang, str_slash, te));
+
+                if (truep (filep (t)))
                 {
-                    e = lx_environment_bind (e, sym_format, tf);
+                    tf = lx_environment_lookup(mime_map, type);
 
-                    io = sx_open_io (io_open_read (sx_string (t)),io_open_null);
+                    e = lx_environment_bind (e, sym_language, lang);
 
-                    while (!eofp (r = sx_read (io)))
+                    if (!nexp (tf))
                     {
-                        if (!nexp (r))
+                        e = lx_environment_bind (e, sym_format, tf);
+
+                        io = sx_open_io (io_open_read (sx_string (t)),
+                                         io_open_null);
+
+                        while (!eofp (r = sx_read (io)))
                         {
-                            sexpr n = car (r);
-                            if (truep (equalp (sym_available_languages, n)))
+                            if (!nexp (r))
                             {
-                                e = lx_environment_bind (e, sym_language,
-                                        car (cdr (r)));
-                            }
-                            else if (truep (equalp (sym_object, n)))
-                            {
-                                tje = lx_environment_join (*env, e);
-                                data = cons (lx_eval (r, &tje), data);
-                            }
-                            else
-                            {
-                                data = cons (r, data);
+                                sexpr n = car (r);
+                                if (truep (equalp (sym_object, n)))
+                                {
+                                    tje = lx_environment_join (*env, e);
+                                    data = cons (lx_eval (r, &tje), data);
+                                }
+                                else
+                                {
+                                    data = cons (r, data);
+                                }
                             }
                         }
+
+                        sx_close_io (io);
+
+                        return cons (e, sx_reverse (data));
                     }
-
-                    sx_close_io (io);
-
-                    return cons (e, sx_reverse (data));
+                    else
+                    {
+                        return cons (e, cons (cons (sym_object,
+                                     cons (sym_verbatim, cons (t,
+                                           sx_end_of_list))), sx_end_of_list));
+                    }
                 }
-                else
-                {
-                    return cons (e, cons (cons (sym_object, cons (sym_verbatim,
-                                 cons (t, sx_end_of_list))), sx_end_of_list));
-                }
+
+                lcodes = cdr (lcodes);
             }
         }
     }
@@ -143,8 +238,8 @@ static sexpr get (sexpr arguments, sexpr *env)
     if (!nexp (lx_environment_lookup (e, sym_error)))
     {
         return cons (sym_object,
-                     cons (cons (sym_error, sym_file_not_found),
-                           sx_end_of_list));
+                     cons (cons (sym_error, cons (sym_file_not_found,
+                           sx_end_of_list)), sx_end_of_list));
     }
     else
     {
