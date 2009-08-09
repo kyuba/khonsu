@@ -39,6 +39,7 @@ define_symbol (sym_tao_match,                "tao:match");
 define_symbol (sym_tao_replace,              "tao:replace");
 define_symbol (sym_tao_item,                 "tao:item");
 define_symbol (sym_tao_tail,                 "tao:tail");
+define_symbol (sym_tao_all,                  "tao:all");
 
 define_symbol (sym_tao_profiles,             "tao-profiles");
 define_symbol (sym_tao_themes,               "tao-themes");
@@ -189,7 +190,11 @@ static sexpr apply_replacement (sexpr rx, sexpr node, sexpr path, sexpr env)
 
     if (symbolp (type))
     {
-        if (truep (equalp (sym_tao_tail, type)))
+        if (truep (equalp (sym_tao_all, type)))
+        {
+            return node;
+        }
+        else if (truep (equalp (sym_tao_tail, type)))
         {
             int n = sx_integer (car (cdr (rx))) - 1;
             c = node;
@@ -235,7 +240,7 @@ static sexpr apply_transformation
         (struct transformation *trb, sexpr arguments, sexpr path, sexpr env)
 {
     struct transformation *tr = trb;
-    sexpr c, d, da, db, rc, rx, rcc, pc, type;
+    sexpr c, d, da, db, rc, rx, pc, type;
     char good;
 
     if (!consp (arguments))

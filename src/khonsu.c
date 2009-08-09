@@ -117,6 +117,11 @@ static sexpr request (sexpr arguments, sexpr *env)
     return sx_nonexistent;
 }
 
+static sexpr verbatim (sexpr arguments, sexpr *env)
+{
+    return cons (sym_verbatim, arguments);
+}
+
 static sexpr object_sub (sexpr arguments, sexpr env)
 {
     if (consp (arguments))
@@ -231,6 +236,9 @@ void initialise_khonsu ()
         kho_environment = lx_environment_bind
                 (kho_environment, sym_debug,
                  lx_foreign_lambda (sym_debug, debug));
+        kho_environment = lx_environment_bind
+                (kho_environment, sym_verbatim,
+                 lx_foreign_lambda (sym_verbatim, verbatim));
 
         if (curie_argv[1])
         {

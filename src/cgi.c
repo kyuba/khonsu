@@ -26,6 +26,7 @@
  * THE SOFTWARE.
 */
 
+#include <seteh/lambda.h>
 #include <curie/sexpr.h>
 #include <curie/main.h>
 #include <curie/memory.h>
@@ -33,14 +34,22 @@
 #include <curie/network.h>
 #include <curie/io.h>
 
-define_symbol (sym_request, "request");
-define_symbol (sym_reply,   "reply");
-define_symbol (sym_get,     "get");
+define_symbol (sym_request,        "request");
+define_symbol (sym_reply,          "reply");
+define_symbol (sym_get,            "get");
+define_symbol (sym_verbatim,       "verbatim");
+define_symbol (sym_format,         "format");
+define_symbol (sym_error,          "error");
+define_symbol (sym_language,       "language");
+define_symbol (sym_file_not_found, "file-not-found");
 
-define_string (str_index,   "index.xhtml");
+define_string (str_index,          "index.xhtml");
+define_string (str_nil,            "");
 
 define_string (str_error_transcript_not_possible_xhtml,
                "/error/transcript-not-possible.xhtml");
+define_string (str_text_plain,
+               "text/plain");
 
 #define KHONSU_SOCKET_ENVIRONMENT "KHONSU_SOCKET="
 #define SCRIPT_NAME_ENVIRONMENT   "PATH_INFO="
@@ -48,6 +57,8 @@ define_string (str_error_transcript_not_possible_xhtml,
 
 #define HTTP_STATUS               "Status: "
 #define HTTP_200_OK               "200 OK"
+#define HTTP_404_FNF              "404 File not Found"
+#define HTTP_500_ISE              "500 Internal Server Error"
 #define HTTP_CONTENT_LENGTH       "Content-Length: "
 #define HTTP_CONTENT_TYPE         "Content-Type: "
 #define HTTP_XHTML_MIME           "application/xhtml+xml"
@@ -69,7 +80,45 @@ static void request (sexpr sn)
                 cons (cons (sym_get, cons (sx_nil, cons (sn,
                             sx_end_of_list))),
                       sx_end_of_list))));
+}
 
+static void write_content_length (unsigned long len)
+{
+    unsigned int l = (MAX_NUM_LENGTH - 1), k;
+    char b[MAX_NUM_LENGTH] = { 0 };
+    io_collect (out, HTTP_CONTENT_LENGTH,
+                (sizeof (HTTP_CONTENT_LENGTH) -1));
+
+    k = len;
+
+    while (k > 10)
+    {
+        b[l] = ('0' + (k % 10));
+        k /= 10;
+        l--;
+    }
+
+    b[l] = ('0' + k);
+    io_collect (out, b + l, (MAX_NUM_LENGTH) - l);
+    io_collect (out, "\r\n", 2);
+}
+
+static void verbatim_reply (sexpr sxfile)
+{
+    struct io *in = io_open_read (sx_string (sxfile));
+    enum io_result r;
+
+    do
+    {
+        r = io_read (in);
+    } while (r != io_end_of_file);
+
+    write_content_length (in->length);
+    io_collect (out, "\r\n", 2);
+
+    io_collect (out, in->buffer, in->length - in->position);
+
+    io_close (in);
 }
 
 static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
@@ -84,19 +133,41 @@ static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
         if (truep (equalp (sa, id_token)))
         {
             const char *output = (const char *)0;
+            sexpr sxoutput = str_nil;
+            sexpr env      = lx_make_environment (sx_end_of_list);
+            sexpr mime     = str_text_plain;
+            sexpr verbatim = sx_nonexistent;
+            sexpr t, ta, tb;
+
             sx = cdr (sx);
-            sa = car (sx);
 
-            while (!stringp (sa) && consp (sx))
+            while (consp (sx))
             {
-                sx = cdr (sx);
                 sa = car (sx);
+                if (environmentp (sa))
+                {
+                    env = lx_environment_join (env, sa);
+                }
+                else if (stringp (sa))
+                {
+                    sxoutput = sx_join (sxoutput, sa, str_nil);
+                }
+                else if (consp (sa))
+                {
+                    if (truep (equalp (car (sa), sym_verbatim)))
+                    {
+                        verbatim = car (cdr (sa));
+                    }
+                }
+                sx = cdr (sx);
             }
 
-            if (stringp (sa))
+            if (!nexp (t = lx_environment_lookup (env, sym_format)))
             {
-                output = sx_string (sa);
+                mime = t;
             }
+
+            output = sx_string (sxoutput);
 
             if (output == (const char *)0)
             {
@@ -104,38 +175,78 @@ static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
             }
             else
             {
-                unsigned int n, l = (MAX_NUM_LENGTH - 1), k;
-                char b[MAX_NUM_LENGTH] = { 0 };
+                unsigned int n, ml;
+                const char *m = sx_string (mime);
+                const char *e1, *e2;
 
-                for (n = 0; output[n] != (char)0; n++);
+                for (ml = 0; m[ml] != (char)0;     ml++);
+                for (n = 0;  output[n] != (char)0; n++);
 
                 io_collect (out, HTTP_STATUS, (sizeof (HTTP_STATUS) -1));
-                io_collect (out, HTTP_200_OK, (sizeof (HTTP_200_OK) -1));
-                io_collect (out, "\r\n", 2);
 
-                io_collect (out, HTTP_CONTENT_LENGTH,
-                            (sizeof (HTTP_CONTENT_LENGTH) -1));
-
-                k = n;
-
-                while (k > 10)
+                if (!nexp (t = lx_environment_lookup (env, sym_error)))
                 {
-                    b[l] = ('0' + (k % 10));
-                    k /= 10;
-                    l--;
+                    if (truep (equalp (t, sym_file_not_found)))
+                    {
+                        io_collect (out, HTTP_404_FNF,
+                                    (sizeof (HTTP_404_FNF) -1));
+                    }
+                    else
+                    {
+                        io_collect (out, HTTP_500_ISE,
+                                    (sizeof (HTTP_500_ISE) -1));
+                    }
                 }
-
-                b[l] = ('0' + k);
-                io_collect (out, b + l, (MAX_NUM_LENGTH) - l);
+                else
+                {
+                    io_collect (out, HTTP_200_OK, (sizeof (HTTP_200_OK) -1));
+                }
                 io_collect (out, "\r\n", 2);
 
                 io_collect (out, HTTP_CONTENT_TYPE,
                             (sizeof (HTTP_CONTENT_TYPE) -1));
-                io_collect (out, HTTP_XHTML_MIME,
-                            (sizeof (HTTP_XHTML_MIME) -1));
-                io_collect (out, "\r\n\r\n", 4);
+                io_collect (out, m, ml);
+                io_collect (out, "\r\n", 2);
 
-                io_write (out, output, n);
+                if (!nexp (verbatim))
+                {
+                    verbatim_reply (verbatim);
+                }
+                else
+                {
+                    write_content_length (n);
+
+                    t = lx_environment_alist (env);
+                    while (consp (t))
+                    {
+                        ta = car (t);
+                        tb = cdr (ta);
+                        ta = car (ta);
+
+                        if (truep (equalp (ta, sym_error)) ||
+                            truep (equalp (ta, sym_format)))
+                        {
+                            t = cdr (t);
+                            continue;
+                        }
+
+                        e1 = sx_symbol (ta);
+                        e2 = sx_string (tb);
+
+                        for (ml = 0; e1[ml] != (char)0; ml++);
+                        io_collect (out, e1, ml);
+                        io_collect (out, ": ", 2);
+                        for (ml = 0; e2[ml] != (char)0; ml++);
+                        io_collect (out, e2, ml);
+                        io_collect (out, "\r\n", 2);
+
+                        t  = cdr (t);
+                    }
+
+                    io_collect (out, "\r\n", 2);
+
+                    io_write (out, output, n);
+                }
 
                 multiplex_del_sexpr (io);
             }
@@ -155,6 +266,7 @@ int cmain ()
     multiplex_io ();
     multiplex_sexpr ();
     multiplex_network ();
+    initialise_seteh ();
 
     out = io_open_stdout ();
 

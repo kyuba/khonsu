@@ -67,8 +67,8 @@ static sexpr get (sexpr arguments, sexpr *env)
 
     if (truep (filep (t)))
     {
-        return cons (e, cons (cons (sym_object, cons (sym_verbatim,
-                     cons (t, sx_end_of_list))), sx_end_of_list));
+        return cons (e, cons (cons (sym_verbatim,
+                     cons (t, sx_end_of_list)), sx_end_of_list));
     }
     else
     {
