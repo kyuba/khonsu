@@ -181,6 +181,8 @@ static sexpr get (sexpr arguments, sexpr *env)
             lcodes = get_acceptable_languages
                     (lx_environment_lookup (e, sym_accept_language));
 
+            e = lx_environment_bind (e, sym_language, lcodes);
+
             while (consp (lcodes))
             {
                 lang = car (lcodes);
@@ -191,8 +193,6 @@ static sexpr get (sexpr arguments, sexpr *env)
                 if (truep (filep (t)))
                 {
                     tf = lx_environment_lookup(mime_map, type);
-
-                    e = lx_environment_bind (e, sym_language, lang);
 
                     if (!nexp (tf))
                     {
