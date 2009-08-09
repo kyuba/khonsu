@@ -1,0 +1,8 @@
+(tao:transform
+  (tao:match format . "application/xhtml\\+xml")
+
+  (tao:replace
+     ("html" "head")
+     ((head (tao:all)
+            (link (ε (rel . "stylesheet") (href . "css/default.css")
+                     (type . "text/css")))))))

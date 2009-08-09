@@ -6,10 +6,10 @@
   (tao:replace
      ("page")
      ("<?xml version=\"1.1\" encoding=\"utf-8\" ?><!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">"
-      (html (head (title (tao:item 1)))
+      (html (ε (xmlns . "http://www.w3.org/1999/xhtml"))
+            (head (title (tao:item 1)))
             (body (tao:tail 2)))))
 
   (tao:replace
      ("paragraph")
-     ((p (tao:tail 1))))
-)
+     ((p (tao:all)))))

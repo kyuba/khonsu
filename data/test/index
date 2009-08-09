@@ -9,8 +9,9 @@
     (h2 (? (equal? language "en")
            "title (EN)"
            "title"))
-    (? (equal? language "en")
-       (paragraph "lorem ipsum... (EN)")
-       (paragraph "lorem ipsum..."))
+    (paragraph
+       (? (equal? language "en")
+          "lorem ipsum... (EN)"
+          "lorem ipsum..."))
     (paragraph "common text 2")
     (contact blahblubb)))

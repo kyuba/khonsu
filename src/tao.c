@@ -231,9 +231,10 @@ static sexpr apply_replacement (sexpr rx, sexpr node, sexpr path, sexpr env)
     }
 }
 
-static sexpr object_sub (sexpr arguments, sexpr path, sexpr env)
+static sexpr apply_transformation
+        (struct transformation *trb, sexpr arguments, sexpr path, sexpr env)
 {
-    struct transformation *tr = tao_profiles;
+    struct transformation *tr = trb;
     sexpr c, d, da, db, rc, rx, rcc, pc, type;
     char good;
 
@@ -256,7 +257,7 @@ static sexpr object_sub (sexpr arguments, sexpr path, sexpr env)
 
         while (consp (da))
         {
-            d  = cons (object_sub (car (da), path, env), d);
+            d  = cons (apply_transformation (trb, car (da), path, env), d);
 
             da = cdr (da);
         }
@@ -317,7 +318,8 @@ static sexpr object_sub (sexpr arguments, sexpr path, sexpr env)
                     d = sx_end_of_list;
                     while (consp (c))
                     {
-                        d = cons (object_sub (car (c), sx_end_of_list, env), d);
+                        d = cons (apply_transformation
+                                      (trb, car (c), sx_end_of_list, env), d);
                         c = cdr (c);
                     }
 
@@ -334,12 +336,20 @@ static sexpr object_sub (sexpr arguments, sexpr path, sexpr env)
 
     while (consp (da))
     {
-        d  = cons (object_sub (car (da), path, env), d);
+        d  = cons (apply_transformation (trb, car (da), path, env), d);
 
         da = cdr (da);
     }
 
     return cons (type, sx_reverse (d));
+}
+
+static sexpr object_sub (sexpr arguments, sexpr path, sexpr env)
+{
+    return apply_transformation
+            (tao_themes,
+             apply_transformation (tao_profiles, arguments, path, env),
+             path, env);
 }
 
 static sexpr object (sexpr arguments, sexpr *env)
