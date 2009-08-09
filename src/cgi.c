@@ -34,30 +34,32 @@
 #include <curie/network.h>
 #include <curie/io.h>
 
-define_symbol (sym_request,         "request");
-define_symbol (sym_reply,           "reply");
-define_symbol (sym_get,             "get");
-define_symbol (sym_post,            "post");
-define_symbol (sym_put,             "put");
-define_symbol (sym_delete,          "delete");
-define_symbol (sym_options,         "options");
-define_symbol (sym_verbatim,        "verbatim");
-define_symbol (sym_format,          "format");
-define_symbol (sym_head,            "head");
-define_symbol (sym_error,           "error");
-define_symbol (sym_language,        "language");
-define_symbol (sym_accept,          "accept");
-define_symbol (sym_accept_language, "accept-language");
-define_symbol (sym_user_agent,      "user-agent");
-define_symbol (sym_method,          "method");
-define_symbol (sym_file_not_found,  "file-not-found");
+define_symbol (sym_request,             "request");
+define_symbol (sym_reply,               "reply");
+define_symbol (sym_get,                 "get");
+define_symbol (sym_post,                "post");
+define_symbol (sym_put,                 "put");
+define_symbol (sym_delete,              "delete");
+define_symbol (sym_options,             "options");
+define_symbol (sym_verbatim,            "verbatim");
+define_symbol (sym_format,              "format");
+define_symbol (sym_head,                "head");
+define_symbol (sym_error,               "error");
+define_symbol (sym_language,            "language");
+define_symbol (sym_accept,              "accept");
+define_symbol (sym_accept_language,     "accept-language");
+define_symbol (sym_user_agent,          "user-agent");
+define_symbol (sym_request_body_type,   "request-body-type");
+define_symbol (sym_request_body_length, "request-body-length");
+define_symbol (sym_method,              "method");
+define_symbol (sym_file_not_found,      "file-not-found");
 
-define_string (str_index,           "index.xhtml");
-define_string (str_nil,             "");
+define_string (str_index,               "index.xhtml");
+define_string (str_nil,                 "");
 
 define_string (str_error_transcript_not_possible_xhtml,
-                                    "/error/transcript-not-possible.xhtml");
-define_string (str_text_plain,      "text/plain");
+                                        "/error/transcript-not-possible.xhtml");
+define_string (str_text_plain,          "text/plain");
 
 #define KHONSU_SOCKET_ENVIRONMENT        "KHONSU_SOCKET="
 #define SCRIPT_NAME_ENVIRONMENT          "PATH_INFO="
@@ -65,6 +67,8 @@ define_string (str_text_plain,      "text/plain");
 #define HTTP_ACCEPT_LANGUAGE_ENVIRONMENT "HTTP_ACCEPT_LANGUAGE="
 #define HTTP_USER_AGENT_ENVIRONMENT      "HTTP_USER_AGENT="
 #define REQUEST_METHOD_ENVIRONMENT       "REQUEST_METHOD="
+#define CONTENT_TYPE_ENVIRONMENT         "CONTENT_TYPE="
+#define CONTENT_LENGTH_ENVIRONMENT       "CONTENT_LENGTH="
 #define KHONSU_CGI_IDENTIFIER 10
 
 #define HTTP_STATUS               "Status: "
@@ -267,13 +271,13 @@ static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
     }
 }
 
-#define env_test_add(j,ev,key,env)\
+#define env_test_add(j,ev,key,env,mk)\
         for (j = 0; ((c = t[j]) != (char)0) && (c == ev[j]); j++);\
         if ((j == (sizeof (ev) - 1)) && (t[0] == ev[0]))\
         {\
             env = lx_environment_bind\
                   (env, key,\
-                   make_string (t + (sizeof (ev) - 1)));\
+                   mk (t + (sizeof (ev) - 1)));\
             continue;\
         }\
 
@@ -372,10 +376,16 @@ int cmain ()
             continue;
         }
 
-        env_test_add (j, HTTP_ACCEPT_ENVIRONMENT, sym_accept, env);
+        env_test_add (j, CONTENT_TYPE_ENVIRONMENT, sym_request_body_type, env,
+                      make_string);
+        env_test_add (j, CONTENT_LENGTH_ENVIRONMENT, sym_request_body_length,
+                      env, make_symbol);
+        env_test_add (j, HTTP_ACCEPT_ENVIRONMENT, sym_accept, env,
+                      make_string);
         env_test_add (j, HTTP_ACCEPT_LANGUAGE_ENVIRONMENT, sym_accept_language,
-                      env);
-        env_test_add (j, HTTP_USER_AGENT_ENVIRONMENT, sym_user_agent, env);
+                      env, make_string);
+        env_test_add (j, HTTP_USER_AGENT_ENVIRONMENT, sym_user_agent, env,
+                      make_string);
     }
 
     multiplex_add_io (out, (void *)0, (void *)0, (void *)0);
