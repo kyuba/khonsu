@@ -25,6 +25,21 @@
       (tao:tail 2)))
 
   (tao:replace
+     ("sub-section") .
+     ((h3 (tao:item 1))
+      (tao:tail 2)))
+
+  (tao:replace
+     ("sub-sub-section") .
+     ((h4 (tao:item 1))
+      (tao:tail 2)))
+
+  (tao:replace
+     ("formal-paragraph") .
+     ((h5 (tao:item 1))
+      (tao:tail 2)))
+
+  (tao:replace
      ("link") .
      (a (tao:all)))
 

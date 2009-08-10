@@ -8,7 +8,7 @@ thead, th, em, strong
 body
 {
     font-family: sans-serif;
-    padding-left: 200px;
+    padding: 5px 25px 5px 200px;
 }
 
 h1, h2, h3, h4, h5, h6, p
@@ -83,4 +83,9 @@ a:hover
 div#menu ul li.selected a
 {
     font-weight: bold;
+}
+
+p, td, th
+{
+    text-align: justify;
 }
