@@ -1,6 +1,7 @@
 (object
   (page
     "test page"
+    (include "/menu.raw")
     (h1 (ε (a . "b")) "title (common)")
     (paragraph "common text 1" "common text 3 ... "
       (paragraph "common text 5" "common text 6"))

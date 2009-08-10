@@ -37,6 +37,10 @@
 define_symbol (sym_accept_language,  "accept-language");
 define_symbol (sym_Vary,             "Vary");
 define_symbol (sym_default_language, "default-language");
+define_symbol (sym_menu,             "menu");
+define_symbol (sym_include,          "include");
+define_symbol (sym_base_name,        "base-name");
+define_symbol (sym_extension,        "extension");
 
 define_string (str_Accept_Language,  "Accept-Language");
 define_string (str_error_file_not_found_xhtml,
@@ -132,19 +136,13 @@ static sexpr get_acceptable_languages (sexpr lq)
     return lcodes;
 }
 
-static sexpr get (sexpr arguments, sexpr *env)
+static sexpr include (sexpr arguments, sexpr *env)
 {
     define_string (str_slash, "/");
-    sexpr e = car (arguments),
-          to = car (cdr (arguments)),
+    sexpr e = *env, to = car (arguments),
           t = sx_join (webroot, str_slash, to),
           data = sx_end_of_list, r, tje, lang, lcodes, te, type, tf;
     struct sexpr_io *io;
-
-    if (!environmentp (e))
-    {
-        e = lx_make_environment (sx_end_of_list);
-    }
 
     if (truep (filep (t)))
     {
@@ -182,6 +180,9 @@ static sexpr get (sexpr arguments, sexpr *env)
                     (lx_environment_lookup (e, sym_accept_language));
 
             e = lx_environment_bind (e, sym_language, lcodes);
+            e = lx_environment_bind (e, sym_base_name, te);
+            e = lx_environment_bind (e, sym_extension, type);
+            e = lx_environment_bind (e, sym_Vary, str_Accept_Language);
 
             while (consp (lcodes))
             {
@@ -208,7 +209,9 @@ static sexpr get (sexpr arguments, sexpr *env)
                                 sexpr n = car (r);
                                 if (truep (equalp (sym_object, n)))
                                 {
-                                    tje = lx_environment_join (*env, e);
+                                    tje = lx_environment_join
+                                            (kho_environment, *env);
+                                    tje = lx_environment_join (tje, e);
                                     data = cons (lx_eval (r, &tje), data);
                                 }
                                 else
@@ -243,12 +246,30 @@ static sexpr get (sexpr arguments, sexpr *env)
     }
     else
     {
+        return sx_nonexistent;
+    }
+}
+
+static sexpr get (sexpr arguments, sexpr *env)
+{
+    sexpr e = car (arguments), r;
+
+    if (!environmentp (e))
+    {
+        e = lx_make_environment (sx_end_of_list);
+    }
+
+    r = include (cdr (arguments), &e);
+
+    if (nexp (r))
+    {
         e = lx_environment_bind (e, sym_error, sym_file_not_found);
 
-        return get (cons (e, cons (str_error_file_not_found_xhtml,
-                    sx_end_of_list)),
-                    env);
+        return include (cons (str_error_file_not_found_xhtml,
+                        sx_end_of_list), &e);
     }
+
+    return r;
 }
 
 int cmain ()
@@ -263,6 +284,9 @@ int cmain ()
 
     kho_environment = lx_environment_bind
             (kho_environment, sym_get, lx_foreign_lambda (sym_get, get));
+    kho_environment = lx_environment_bind
+            (kho_environment, sym_include,
+             lx_foreign_lambda (sym_include, include));
 
     kho_debug (make_symbol ("khonsu-backend"));
 

@@ -10,3 +10,5 @@
 (socket "khonsu-test-socket")
 
 (default-language "en")
+
+(map-extension "raw" text/s-expression-data)
