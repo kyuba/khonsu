@@ -1,5 +1,5 @@
 (object
-  (page
+  (document
     "test page"
     (include "/menu.raw")
     (h1 (ε (a . "b")) "title (common)")

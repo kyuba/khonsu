@@ -1,5 +1,5 @@
 (object
-  (page
+  (document
     "Transcript not possible"
     (paragraph
        "Sorry, Khonsu is unable to produce a suitable encoding that your browser can understand.")))

@@ -54,7 +54,6 @@ void  relay_spawn           (sexpr configuration);
 void  relay_sub             (sexpr request);
 
 define_symbol (sym_Content_Type,             "Content-Type");
-define_symbol (sym_text_x_s_expression_data, "text/x-s-expression-data");
 define_symbol (sym_pipeline,                 "pipeline");
 define_symbol (sym_root,                     "root");
 define_symbol (sym_request,                  "request");
@@ -69,6 +68,7 @@ define_symbol (sym_format,                   "format");
 define_symbol (sym_language,                 "language");
 define_symbol (sym_map_extension,            "map-extension");
 define_symbol (sym_verbatim,                 "verbatim");
+define_symbol (sym_id,                       "id");
 
 define_string (str_nil,                      "");
 

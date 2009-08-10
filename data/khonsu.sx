@@ -1,4 +1,4 @@
-(pipeline "tao-xmlise" "tao" "khonsu-backend")
+(pipeline "xmlise" "tao" "sigma" "khonsu-backend")
 
 ; (root "/var/www/htdocs")
 (root "data/test")
@@ -11,4 +11,4 @@
 
 (default-language "en")
 
-(map-extension "raw" text/s-expression-data)
+(map-extension "raw" "text/s-expression-data")

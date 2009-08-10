@@ -41,8 +41,8 @@
 
   (code "tao"))
 
-(programme "tao-xmlise" libcurie
-  (name "Tao XML-ise")
+(programme "xmlise" libcurie
+  (name "XML-ise")
   (description "S-Expression to XML Converter")
   (version "1")
   (url "http://kyuba.org/")
@@ -50,6 +50,16 @@
   (libraries "khonsu" "seteh")
 
   (code "xmlise"))
+
+(programme "sigma" libcurie
+  (name "Sigma")
+  (description "XML/XHTML goodies")
+  (version "1")
+  (url "http://kyuba.org/")
+
+  (libraries "khonsu" "seteh")
+
+  (code "sigma"))
 
 (programme "khonsu-cgi" libcurie
   (name "Khonsu CGI")
