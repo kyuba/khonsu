@@ -7,7 +7,7 @@ body
 ul#menu
 {
     position: absolute;
-    width: 150px;
+    width: 140px;
     padding: 20px 20px 20px 30px;
     left: 0px;
     top: 0px;
@@ -21,7 +21,18 @@ ul#menu li
     margin: 0px;
 }
 
-h1
+a
 {
-    border-bottom: 1px dashed black;
+    color: #00007f;
+    text-decoration: none;
+}
+
+a:hover
+{
+    color: #7777ee;
+}
+
+ul#menu li.selected a
+{
+    font-weight: bold;
 }

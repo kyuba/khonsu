@@ -64,11 +64,11 @@ static sexpr menu (sexpr arguments, sexpr *env)
             e  = lx_make_environment (sx_end_of_list);
         }
 
-        sx = cons (cons (sym_item, cons (cons (sym_link, cons (e, cons
+        sx = cons (cons (sym_item, cons (e, cons (cons (sym_link, cons
                 (lx_make_environment (cons (cons (sym_href, sx_join (target,
                  str_dot, lx_environment_lookup (*env, sym_extension))),
-                 sx_end_of_list)), cons (name, sx_end_of_list)))),
-                 sx_end_of_list)), sx);
+                 sx_end_of_list)), cons (name, sx_end_of_list))),
+                 sx_end_of_list))), sx);
 
         arguments = cdr (arguments);
     }
