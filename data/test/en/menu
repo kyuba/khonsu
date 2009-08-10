@@ -1,2 +1,3 @@
 (object
-  (menu ("index" "Home")))
+  (menu ("index" "Home")
+        ("test" "Test")))

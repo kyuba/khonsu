@@ -138,7 +138,7 @@ int cmain ()
             (kho_environment, sym_object,
              lx_foreign_lambda (sym_object, object));
 
-    kho_debug (make_symbol ("tao-xmlise"));
+    kho_debug (make_symbol ("xmlise"));
 
     while (multiplex () != mx_nothing_to_do);
 

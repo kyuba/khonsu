@@ -37,12 +37,15 @@ define_symbol (sym_link,      "link");
 define_symbol (sym_href,      "href");
 define_symbol (sym_item,      "item");
 define_symbol (sym_extension, "extension");
+define_symbol (sym_base_name, "base-name");
+define_symbol (sym_class,     "class");
+define_string (str_selected,  "selected");
 define_string (str_menu,      "menu");
 define_string (str_dot,       ".");
 
 static sexpr menu (sexpr arguments, sexpr *env)
 {
-    sexpr sx = sx_end_of_list, target, name, t;
+    sexpr sx = sx_end_of_list, target, name, t, e;
 
     while (consp (arguments))
     {
@@ -50,16 +53,25 @@ static sexpr menu (sexpr arguments, sexpr *env)
         target = car (t);
         name   = car (cdr (t));
 
-        sx = cons (cons (sym_item, cons (cons (sym_link, cons
+        if (truep (equalp (target,
+                           lx_environment_lookup (*env, sym_base_name))))
+        {
+            e  = lx_make_environment
+                    (cons (cons (sym_class, str_selected), sx_end_of_list));
+        }
+        else
+        {
+            e  = lx_make_environment (sx_end_of_list);
+        }
+
+        sx = cons (cons (sym_item, cons (cons (sym_link, cons (e, cons
                 (lx_make_environment (cons (cons (sym_href, sx_join (target,
                  str_dot, lx_environment_lookup (*env, sym_extension))),
-                 sx_end_of_list)), cons (name, sx_end_of_list))),
+                 sx_end_of_list)), cons (name, sx_end_of_list)))),
                  sx_end_of_list)), sx);
 
         arguments = cdr (arguments);
     }
-
-    sx = sx_reverse (sx);
 
     return cons (sym_list, cons (lx_make_environment (cons (cons (sym_id,
              str_menu), sx_end_of_list)), sx_reverse (sx)));
@@ -74,7 +86,7 @@ int cmain ()
     kho_environment = lx_environment_bind
             (kho_environment, sym_menu, lx_foreign_lambda (sym_menu, menu));
 
-    kho_debug (make_symbol ("tao"));
+    kho_debug (make_symbol ("sigma"));
 
     while (multiplex () != mx_nothing_to_do);
 

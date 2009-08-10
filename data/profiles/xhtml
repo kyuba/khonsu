@@ -4,7 +4,7 @@
   (tao:match format . "application/xhtml\\+xml")
 
   (tao:replace
-     ("document")
+     ("document") .
      ("<?xml version=\"1.0\" encoding=\"utf-8\" ?><!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">"
       (html (ε (xmlns . "http://www.w3.org/1999/xhtml"))
             (head (title (tao:item 1)))
@@ -12,17 +12,17 @@
                   (tao:tail 2)))))
 
   (tao:replace
-     ("paragraph")
-     ((p (tao:all))))
+     ("paragraph") .
+     (p (tao:all)))
 
   (tao:replace
-     ("link")
-     ((a (tao:all))))
+     ("link") .
+     (a (tao:all)))
 
   (tao:replace
-     ("list")
-     ((ul (tao:all))))
+     ("list") .
+     (ul (tao:all)))
 
   (tao:replace
-     ("item")
-     ((li (tao:all)))))
+     ("item") .
+     (li (tao:all))))

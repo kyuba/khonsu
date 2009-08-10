@@ -156,7 +156,7 @@ static void configure_callback (sexpr sx)
 
 static sexpr apply_replacement (sexpr rx, sexpr node, sexpr path, sexpr env)
 {
-    sexpr c = rx, d = sx_end_of_list, type, t,
+    sexpr c = rx, d = sx_end_of_list, type, t, ta,
           e = lx_make_environment (sx_end_of_list);
 
     if (!consp (rx))
@@ -164,22 +164,59 @@ static sexpr apply_replacement (sexpr rx, sexpr node, sexpr path, sexpr env)
         return rx;
     }
 
-    type = car (rx);
+    type = car (c);
     if (symbolp (type))
     {
         c = cdr (c);
-
-        t = car (c);
-        if (environmentp (t))
-        {
-            e = t;
-            c = cdr (c);
-        }
     }
 
     while (consp (c))
     {
-        d = cons (apply_replacement (car (c), node, sx_end_of_list, env), d);
+        t = car (c);
+        if (environmentp (t))
+        {
+            e = lx_environment_join (e, t);
+        }
+        else
+        {
+            t = apply_replacement (t, node, sx_end_of_list, env);
+
+            if (consp (t))
+            {
+                ta = car (t);
+
+                if (symbolp (ta))
+                {
+                    d = cons (t, d);
+                }
+                else
+                {
+                    while (consp (t))
+                    {
+                        ta = car (t);
+
+                        if (environmentp (ta))
+                        {
+                            e = lx_environment_join (e, ta);
+                        }
+                        else
+                        {
+                            d = cons (ta, d);
+                        }
+
+                        t = cdr (t);
+                    }
+                }
+            }
+            else if (environmentp (t))
+            {
+                e = lx_environment_join (e, t);
+            }
+            else
+            {
+                d = cons (t, d);
+            }
+        }
 
         c = cdr (c);
     }
@@ -194,7 +231,7 @@ static sexpr apply_replacement (sexpr rx, sexpr node, sexpr path, sexpr env)
         }
         else if (truep (equalp (sym_tao_tail, type)))
         {
-            int n = sx_integer (car (cdr (rx))) - 1;
+            int n = sx_integer (car (cdr (rx)));
             c = node;
 
             while ((n > 0) && consp (c))
@@ -207,7 +244,7 @@ static sexpr apply_replacement (sexpr rx, sexpr node, sexpr path, sexpr env)
         }
         else if (truep (equalp (sym_tao_item, type)))
         {
-            int n = sx_integer (car (cdr (rx))) -1;
+            int n = sx_integer (car (cdr (rx)));
             c = node;
 
             while ((n > 0) && consp (c))
@@ -230,7 +267,7 @@ static sexpr apply_replacement (sexpr rx, sexpr node, sexpr path, sexpr env)
     }
     else
     {
-        return d;
+        return cons (e, d);
     }
 }
 
@@ -238,7 +275,8 @@ static sexpr apply_transformation
         (struct transformation *trb, sexpr arguments, sexpr path, sexpr env)
 {
     struct transformation *tr = trb;
-    sexpr c, d, da, db, rc, rx, pc, type;
+    sexpr c, d, da, db, rc, rx, pc, type, t,
+          e = lx_make_environment (sx_end_of_list);
     char good;
 
     if (!consp (arguments))
@@ -260,12 +298,20 @@ static sexpr apply_transformation
 
         while (consp (da))
         {
-            d  = cons (apply_transformation (trb, car (da), path, env), d);
+            t = car (da);
+            if (environmentp (t))
+            {
+                e = lx_environment_join (e, t);
+            }
+            else
+            {
+                d = cons (apply_transformation (trb, t, path, env), d);
+            }
 
             da = cdr (da);
         }
 
-        return sx_reverse (d);
+        return cons (e, sx_reverse (d));
     }
 
     while (tr != (void *)0)
@@ -319,14 +365,26 @@ static sexpr apply_transformation
                 {
                     c = arguments;
                     d = sx_end_of_list;
+                    e = lx_make_environment (sx_end_of_list);
+
                     while (consp (c))
                     {
-                        d = cons (apply_transformation
-                                      (trb, car (c), sx_end_of_list, env), d);
+                        t = car (c);
+                        if (environmentp (t))
+                        {
+                            e = lx_environment_join (e, t);
+                        }
+                        else
+                        {
+                            d = cons (apply_transformation (trb, t,
+                                      sx_end_of_list, env), d);
+                        }
+
                         c = cdr (c);
                     }
 
-                    return apply_replacement (rx, sx_reverse (d), path, env);
+                    return apply_replacement (rx, cons (e, sx_reverse (d)),
+                                              path, env);
                 }
             }
         }
@@ -339,12 +397,20 @@ static sexpr apply_transformation
 
     while (consp (da))
     {
-        d  = cons (apply_transformation (trb, car (da), path, env), d);
+        t = car (da);
+        if (environmentp (t))
+        {
+            e = lx_environment_join (e, t);
+        }
+        else
+        {
+            d = cons (apply_transformation (trb, t, path, env), d);
+        }
 
         da = cdr (da);
     }
 
-    return cons (type, sx_reverse (d));
+    return cons (type, cons (e, sx_reverse (d)));
 }
 
 static sexpr object_sub (sexpr arguments, sexpr path, sexpr env)

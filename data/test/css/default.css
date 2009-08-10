@@ -1,4 +1,27 @@
 body
 {
     font-family: sans-serif;
+    padding-left: 200px;
+}
+
+ul#menu
+{
+    position: absolute;
+    width: 150px;
+    padding: 20px 20px 20px 30px;
+    left: 0px;
+    top: 0px;
+    margin: 0px;
+    border-right: 1px dashed black;
+}
+
+ul#menu li
+{
+    padding: 0px;
+    margin: 0px;
+}
+
+h1
+{
+    border-bottom: 1px dashed black;
 }

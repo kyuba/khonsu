@@ -62,7 +62,7 @@ define_string (str_error_transcript_not_possible_xhtml,
 define_string (str_text_plain,          "text/plain");
 
 #define KHONSU_SOCKET_ENVIRONMENT        "KHONSU_SOCKET="
-#define SCRIPT_NAME_ENVIRONMENT          "PATH_INFO="
+#define SCRIPT_NAME_ENVIRONMENT          "PATH_INFO=/"
 #define HTTP_ACCEPT_ENVIRONMENT          "HTTP_ACCEPT="
 #define HTTP_ACCEPT_LANGUAGE_ENVIRONMENT "HTTP_ACCEPT_LANGUAGE="
 #define HTTP_USER_AGENT_ENVIRONMENT      "HTTP_USER_AGENT="
