@@ -1,13 +1,62 @@
+html, head, body, ul, ol, li, p, h1, h2, h3, h4, h5, h6, table, tr, td, tbody,
+thead, th, em, strong
+{
+    padding: 0px;
+    margin: 0px;
+}
+
 body
 {
     font-family: sans-serif;
     padding-left: 200px;
 }
 
+h1, h2, h3, h4, h5, h6, p
+{
+    margin: 20px 0px;
+}
+
+h1
+{
+    font-size: 2em;
+}
+
+h2
+{
+    font-size: 1.8em;
+}
+
+h3
+{
+    font-size: 1.6em;
+}
+
+h4
+{
+    font-size: 1.4em;
+}
+
+h5
+{
+    font-size: 1.2em;
+}
+
+h6
+{
+    font-weight: bold;
+}
+
+div#menu h2
+{
+    margin: 0px;
+    font-size: 1.4em;
+}
+
 div#menu
 {
+    background: #b9c9db;
     position: absolute;
-    width: 140px;
+    width: 150px;
     padding: 10px;
     left: 0px;
     top: 0px;
@@ -18,13 +67,6 @@ div#menu
 div#menu ul
 {
     padding: 10px 10px 10px 20px;
-    margin: 0px;
-}
-
-div#menu ul li
-{
-    padding: 0px;
-    margin: 0px;
 }
 
 a
