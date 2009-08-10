@@ -4,18 +4,24 @@ body
     padding-left: 200px;
 }
 
-ul#menu
+div#menu
 {
     position: absolute;
     width: 140px;
-    padding: 20px 20px 20px 30px;
+    padding: 10px;
     left: 0px;
     top: 0px;
     margin: 0px;
     border-right: 1px dashed black;
 }
 
-ul#menu li
+div#menu ul
+{
+    padding: 10px 10px 10px 20px;
+    margin: 0px;
+}
+
+div#menu ul li
 {
     padding: 0px;
     margin: 0px;
@@ -32,7 +38,7 @@ a:hover
     color: #7777ee;
 }
 
-ul#menu li.selected a
+div#menu ul li.selected a
 {
     font-weight: bold;
 }

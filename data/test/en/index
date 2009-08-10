@@ -4,8 +4,8 @@
     (include "/menu.raw")
     (paragraph "common text 1" "common text 3 ... "
       (paragraph "common text 5" "common text 6"))
-    (h2 "title")
-    (paragraph
-          "lorem ipsum...")
-    (paragraph "common text 2")
-    (contact blahblubb)))
+    (section "title"
+      (paragraph
+            "lorem ipsum...")
+      (paragraph "common text 2")
+      (contact blahblubb))))

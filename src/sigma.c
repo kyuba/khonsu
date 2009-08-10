@@ -39,13 +39,18 @@ define_symbol (sym_item,      "item");
 define_symbol (sym_extension, "extension");
 define_symbol (sym_base_name, "base-name");
 define_symbol (sym_class,     "class");
+define_symbol (sym_section,   "section");
+define_symbol (sym_wrap,      "wrap");
 define_string (str_selected,  "selected");
 define_string (str_menu,      "menu");
 define_string (str_dot,       ".");
 
 static sexpr menu (sexpr arguments, sexpr *env)
 {
-    sexpr sx = sx_end_of_list, target, name, t, e;
+    sexpr sx = sx_end_of_list, target, name, t, e, title;
+
+    title     = car (arguments);
+    arguments = cdr (arguments);
 
     while (consp (arguments))
     {
@@ -73,8 +78,10 @@ static sexpr menu (sexpr arguments, sexpr *env)
         arguments = cdr (arguments);
     }
 
-    return cons (sym_list, cons (lx_make_environment (cons (cons (sym_id,
-             str_menu), sx_end_of_list)), sx_reverse (sx)));
+    return cons (sym_wrap, cons (lx_make_environment (cons (cons (sym_id,
+             str_menu), sx_end_of_list)), cons (cons (sym_section, cons (title,
+             cons (cons (sym_list, sx_reverse (sx)), sx_end_of_list))),
+             sx_end_of_list)));
 }
 
 int cmain ()

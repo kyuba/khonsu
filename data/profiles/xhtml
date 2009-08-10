@@ -16,6 +16,15 @@
      (p (tao:all)))
 
   (tao:replace
+     ("wrap") .
+     (div (tao:all)))
+
+  (tao:replace
+     ("section") .
+     ((h2 (tao:item 1))
+      (tao:tail 2)))
+
+  (tao:replace
      ("link") .
      (a (tao:all)))
 
