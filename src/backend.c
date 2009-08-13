@@ -46,6 +46,7 @@ define_string (str_Accept_Language,  "Accept-Language");
 define_string (str_error_file_not_found_xhtml,
                                      "/error/file-not-found.xhtml");
 define_string (str_dot,              ".");
+define_string (str_dot_ksu,          ".ksu");
 
 static sexpr webroot          = sx_nonexistent;
 static sexpr mime_map         = sx_nonexistent;
@@ -183,6 +184,8 @@ static sexpr include (sexpr arguments, sexpr *env)
             e = lx_environment_bind (e, sym_base_name, te);
             e = lx_environment_bind (e, sym_extension, type);
             e = lx_environment_bind (e, sym_Vary, str_Accept_Language);
+
+            te = sx_join (te, str_dot_ksu, str_nil);
 
             while (consp (lcodes))
             {
