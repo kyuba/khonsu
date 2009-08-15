@@ -89,3 +89,19 @@ p, td, th
 {
     text-align: justify;
 }
+
+div.icon
+{
+    float: right;
+    width: 250px;
+    height: 50px;
+    background: #cdd0e3;
+    border: 1px solid #6e7bbd;
+    padding: 2px;
+}
+
+div.icon a img
+{
+    height: 50px;
+    float: left;
+}

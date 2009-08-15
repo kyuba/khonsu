@@ -38,11 +38,11 @@ define_symbol (sym_list,                       "list");
 define_symbol (sym_link,                       "link");
 define_symbol (sym_src,                        "src");
 define_symbol (sym_href,                       "href");
+define_symbol (sym_class,                      "class");
 define_symbol (sym_item,                       "item");
 define_symbol (sym_image,                      "image");
 define_symbol (sym_extension,                  "extension");
 define_symbol (sym_base_name,                  "base-name");
-define_symbol (sym_class,                      "class");
 define_symbol (sym_section,                    "section");
 define_symbol (sym_wrap,                       "wrap");
 define_symbol (sym_contact,                    "contact");
@@ -233,7 +233,13 @@ static sexpr icon (sexpr args, sexpr *env)
 {
     sexpr ta = car (args), d = cdr (args), nm = car (d), ic = car (cdr (d));
 
-    return cons (sym_wrap, cons (lx_make_environment (cons (cons (sym_id, str_icon), sx_end_of_list)), cons (cons (sym_link, cons (lx_make_environment (cons (cons (sym_href, ta), sx_end_of_list)), cons (cons (sym_image, cons (lx_make_environment (cons (cons (sym_src, ic), sx_end_of_list)), sx_end_of_list)), sx_end_of_list))), cons (cons (sym_link, cons (lx_make_environment (cons (cons (sym_href, ta), sx_end_of_list)), cons (nm, sx_end_of_list))), sx_end_of_list))));
+    return cons (sym_wrap, cons (lx_make_environment (cons (cons (sym_class,
+      str_icon), sx_end_of_list)), cons (cons (sym_link, cons
+      (lx_make_environment (cons (cons (sym_href, ta), sx_end_of_list)), cons
+      (cons (sym_image, cons (lx_make_environment (cons (cons (sym_src, ic),
+      sx_end_of_list)), sx_end_of_list)), sx_end_of_list))), cons (cons
+      (sym_link, cons (lx_make_environment (cons (cons (sym_href, ta),
+      sx_end_of_list)), cons (nm, sx_end_of_list))), sx_end_of_list))));
 }
 
 int cmain ()
