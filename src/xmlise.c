@@ -30,6 +30,7 @@
 #include <seteh/lambda.h>
 #include <curie/multiplex.h>
 #include <curie/memory.h>
+#include <curie/gc.h>
 
 define_string (str_lt,      "<");
 define_string (str_ltslash, "</");
@@ -140,7 +141,10 @@ int cmain ()
 
     kho_debug (make_symbol ("xmlise"));
 
-    while (multiplex () != mx_nothing_to_do);
+    while (multiplex () != mx_nothing_to_do)
+    {
+//        gc_invoke();
+    }
 
     return 0;
 }

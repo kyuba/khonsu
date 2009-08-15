@@ -31,6 +31,7 @@
 #include <curie/multiplex.h>
 #include <curie/memory.h>
 #include <curie/filesystem.h>
+#include <curie/gc.h>
 
 #define MAX_HEADER_FIELD_LENGTH 4096
 
@@ -281,6 +282,8 @@ int cmain ()
 
     mime_map = lx_make_environment (sx_end_of_list);
 
+    gc_add_root (&mime_map);
+
     kho_configure_callback = configure_callback;
 
     initialise_khonsu ();
@@ -293,7 +296,10 @@ int cmain ()
 
     kho_debug (make_symbol ("khonsu-backend"));
 
-    while (multiplex () != mx_nothing_to_do);
+    while (multiplex () != mx_nothing_to_do)
+    {
+//        gc_invoke();
+    }
 
     return 0;
 }

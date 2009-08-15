@@ -32,6 +32,7 @@
 #include <curie/directory.h>
 #include <curie/memory.h>
 #include <curie/regex.h>
+#include <curie/gc.h>
 
 define_symbol (sym_tao_map_extension,        "tao:map-extension");
 define_symbol (sym_tao_transform,            "tao:transform");
@@ -71,6 +72,9 @@ static void tao_add_transformation (struct transformation **t, sexpr sx)
     tr->conditions   = sx_end_of_list;
     tr->replacements = sx_end_of_list;
     tr->next         = *t;
+
+    gc_add_root (&(tr->conditions));
+    gc_add_root (&(tr->replacements));
 
     while (consp (sx))
     {
@@ -442,7 +446,10 @@ int cmain ()
 
     kho_debug (make_symbol ("tao"));
 
-    while (multiplex () != mx_nothing_to_do);
+    while (multiplex () != mx_nothing_to_do)
+    {
+//        gc_invoke();
+    }
 
     return 0;
 }

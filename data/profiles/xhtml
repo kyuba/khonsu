@@ -44,6 +44,10 @@
      (a (tao:all)))
 
   (tao:replace
+     ("image") .
+     (img (tao:all)))
+
+  (tao:replace
      ("list") .
      (ul (tao:all)))
 

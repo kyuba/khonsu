@@ -31,6 +31,7 @@
 #include <curie/multiplex.h>
 #include <curie/memory.h>
 #include <curie/network.h>
+#include <curie/gc.h>
 
 define_symbol (sym_socket, "socket");
 
@@ -61,7 +62,10 @@ int cmain ()
 
     kho_debug (make_symbol ("khonsu-server"));
 
-    while (multiplex () != mx_nothing_to_do);
+    while (multiplex () != mx_nothing_to_do)
+    {
+//        gc_invoke();
+    }
 
     return 0;
 }
