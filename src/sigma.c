@@ -165,7 +165,7 @@ static sexpr sub_menu (sexpr arguments, sexpr *env)
 
 static sexpr menu (sexpr arguments, sexpr *env)
 {
-    sexpr sx = sx_end_of_list, target, name, t, e, title;
+    sexpr sx = sx_end_of_list, title;
 
     title     = car (arguments);
     arguments = cdr (arguments);

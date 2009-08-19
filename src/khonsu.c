@@ -33,6 +33,8 @@
 #include <curie/main.h>
 #include <curie/memory.h>
 
+define_symbol (sym_quit, "quit");
+
 struct stdio_list
 {
     struct sexpr_io  *io;
@@ -45,6 +47,7 @@ sexpr kho_configuration                  = sx_end_of_list;
 struct sexpr_io *kho_stdio               = (struct sexpr_io *)0;
 void (*kho_configure_callback)(sexpr)    = (void *)0;
 static struct stdio_list *kho_stdio_list = (struct stdio_list *)0;
+static char willquit                     = 0;
 
 static void sx_stdio_read (sexpr sx, struct sexpr_io *io, void *aux)
 {
@@ -106,6 +109,11 @@ static sexpr reply (sexpr arguments, sexpr *env)
     {
         sx_write (l->io, rp);
         l = l->next;
+    }
+
+    if (willquit)
+    {
+        cexit (0);
     }
 
     return sx_nonexistent;
@@ -196,6 +204,12 @@ static sexpr debug (sexpr arguments, sexpr *env)
     return cons (sym_debug, cons (ddebug, arguments));
 }
 
+static sexpr quit (sexpr arguments, sexpr *env)
+{
+    willquit = 1;
+    return cons (sym_quit, sx_end_of_list);
+}
+
 static sexpr configure (sexpr arguments, sexpr *env)
 {
     static char s = 0;
@@ -216,6 +230,7 @@ void initialise_khonsu ()
     {
         multiplex_sexpr ();
         initialise_seteh ();
+        multiplex_signal ();
 
         kho_register_output (kho_stdio = sx_open_stdio());
 
@@ -239,6 +254,9 @@ void initialise_khonsu ()
         kho_environment = lx_environment_bind
                 (kho_environment, sym_verbatim,
                  lx_foreign_lambda (sym_verbatim, verbatim));
+        kho_environment = lx_environment_bind
+                (kho_environment, sym_quit,
+                 lx_foreign_lambda (sym_quit, quit));
 
         if (curie_argv[1])
         {

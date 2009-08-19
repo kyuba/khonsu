@@ -32,6 +32,7 @@
 #include <curie/memory.h>
 #include <curie/filesystem.h>
 #include <curie/gc.h>
+#include <curie/signal.h>
 
 #define MAX_HEADER_FIELD_LENGTH 4096
 
