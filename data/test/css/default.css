@@ -46,10 +46,19 @@ h6
     font-weight: bold;
 }
 
-div#menu h2
+div#menu h2, div#menu h3
 {
     margin: 0px;
+}
+
+div#menu h2
+{
     font-size: 1.4em;
+}
+
+div#menu h3
+{
+    font-size: 1.2em;
 }
 
 div#menu
@@ -93,7 +102,7 @@ p, td, th
 a.icon
 {
     display: block;
-    float: right;
+    float: left;
     width: 250px;
     height: 48px;
     padding: 3px;
@@ -112,4 +121,12 @@ a.icon img
     height: 48px;
     float: left;
     margin-right: 5px;
+}
+
+a.icon em
+{
+    display: block;
+    font-style: normal;
+    font-weight: bold;
+    margin-top: 3px;
 }

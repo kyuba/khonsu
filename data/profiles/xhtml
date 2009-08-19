@@ -46,8 +46,9 @@
   (tao:replace
      ("icon") .
      (a (ε (class . "icon") (href . (tao:item 1)))
-      (img (ε (src . (tao:item 3))))
-      (tao:item 2)))
+      (img (ε (src . (tao:item 3)) (alt . (tao:item 1))))
+      (em (tao:item 2))
+      (tao:item 4)))
 
   (tao:replace
      ("image") .

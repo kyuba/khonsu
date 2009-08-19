@@ -1,5 +1,6 @@
 (object
   (contact
     "test"
-    (first-name "Test")
-    (last-name  "Test")))
+    (first-name        "Test")
+    (last-name         "Test")
+    (short-description "Dummy Contact")))

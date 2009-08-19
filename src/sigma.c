@@ -49,6 +49,8 @@ define_symbol (sym_contact,                    "contact");
 define_symbol (sym_first_name,                 "first-name");
 define_symbol (sym_last_name,                  "last-name");
 define_symbol (sym_icon,                       "icon");
+define_symbol (sym_short_description,          "short-description");
+define_symbol (sym_sub_section,                "sub-section");
 define_string (str_selected,                   "selected");
 define_string (str_menu,                       "menu");
 define_string (str_slash,                      "/");
@@ -123,6 +125,44 @@ static sexpr include_menu (sexpr file, sexpr env)
     return sx_nonexistent;
 }
 
+static sexpr sub_menu (sexpr arguments, sexpr *env)
+{
+    sexpr sx = sx_end_of_list, target, name, t, e, title;
+
+    title     = car (arguments);
+    arguments = cdr (arguments);
+
+    while (consp (arguments))
+    {
+        t      = car (arguments);
+        target = car (t);
+        name   = car (cdr (t));
+
+        if (truep (equalp (target,
+            lx_environment_lookup (*env, sym_base_name))))
+        {
+            e  = lx_make_environment
+                    (cons (cons (sym_class, str_selected), sx_end_of_list));
+        }
+        else
+        {
+            e  = lx_make_environment (sx_end_of_list);
+        }
+
+        sx = cons (cons (sym_item, cons (e, cons (cons (sym_link, cons
+                (lx_make_environment (cons (cons (sym_href, sx_join (target,
+                 str_dot, lx_environment_lookup (*env, sym_extension))),
+                        sx_end_of_list)), cons (name, sx_end_of_list))),
+                        sx_end_of_list))), sx);
+
+        arguments = cdr (arguments);
+    }
+
+    return cons (cons (sym_sub_section, cons (title,
+                 cons (cons (sym_list, sx_reverse (sx)), sx_end_of_list))),
+                       sx_end_of_list);
+}
+
 static sexpr menu (sexpr arguments, sexpr *env)
 {
     sexpr sx = sx_end_of_list, target, name, t, e, title;
@@ -137,34 +177,14 @@ static sexpr menu (sexpr arguments, sexpr *env)
 
     while (consp (arguments))
     {
-        t      = car (arguments);
-        target = car (t);
-        name   = car (cdr (t));
-
-        if (truep (equalp (target,
-                           lx_environment_lookup (*env, sym_base_name))))
-        {
-            e  = lx_make_environment
-                    (cons (cons (sym_class, str_selected), sx_end_of_list));
-        }
-        else
-        {
-            e  = lx_make_environment (sx_end_of_list);
-        }
-
-        sx = cons (cons (sym_item, cons (e, cons (cons (sym_link, cons
-                (lx_make_environment (cons (cons (sym_href, sx_join (target,
-                 str_dot, lx_environment_lookup (*env, sym_extension))),
-                 sx_end_of_list)), cons (name, sx_end_of_list))),
-                 sx_end_of_list))), sx);
+        sx = cons (sub_menu (car (arguments), env), sx);
 
         arguments = cdr (arguments);
     }
 
     return cons (sym_wrap, cons (lx_make_environment (cons (cons (sym_id,
              str_menu), sx_end_of_list)), cons (cons (sym_section, cons (title,
-             cons (cons (sym_list, sx_reverse (sx)), sx_end_of_list))),
-             sx_end_of_list)));
+             cons (sx_reverse (sx), sx_end_of_list))), sx_end_of_list)));
 }
 
 static sexpr include_contact (sexpr file, sexpr env)
@@ -192,7 +212,8 @@ static sexpr contact (sexpr args, sexpr *env)
     else
     {
         sexpr t, v, icon = str_png_icon_no_picture_png,
-              fn = sx_nonexistent, ln = sx_nonexistent, n = a, te;
+              fn = sx_nonexistent, ln = sx_nonexistent, sdesc = sx_nonexistent,
+              n = a, te;
 
         while (consp (args))
         {
@@ -212,6 +233,10 @@ static sexpr contact (sexpr args, sexpr *env)
             {
                 icon = v;
             }
+            else if (truep (equalp (t, sym_short_description)))
+            {
+                sdesc = v;
+            }
 
             args = cdr (args);
         }
@@ -224,7 +249,8 @@ static sexpr contact (sexpr args, sexpr *env)
                                 lx_environment_lookup (*env, sym_extension),
                                 str_nil)),
                  cons (sx_join (fn, str_space, ln),
-                 cons (icon, sx_end_of_list)))),
+                 cons (icon,
+                 cons (sdesc, sx_end_of_list))))),
                  sx_end_of_list)), &te);
     }
 }
