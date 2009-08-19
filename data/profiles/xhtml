@@ -1,7 +1,7 @@
 (tao:map-extension "xhtml" "application/xhtml+xml")
 
 (tao:transform
-  (tao:match format . "application/xhtml\\+xml")
+  (tao:match format . "(application/xhtml\\+xml|text/html)")
 
   (tao:replace
      ("document") .

@@ -8,7 +8,14 @@ thead, th, em, strong, a
 body
 {
     font-family: sans-serif;
-    padding: 5px 25px 5px 200px;
+    padding: 5px 250px 5px 25px;
+}
+
+p:first-letter
+{
+    float: left;
+    font-size: 2.1em;
+    font-weight: bold;
 }
 
 h1, h2, h3, h4, h5, h6, p
@@ -63,14 +70,16 @@ div#menu h3
 
 div#menu
 {
-    background: #b9c9db;
+/*    background: #b9c9db;*/
+    background: #e9e9eb;
     position: absolute;
-    width: 150px;
+    width: 200px;
     padding: 10px;
-    left: 0px;
+    right: 0px;
     top: 0px;
     margin: 0px;
-    border-right: 1px dashed black;
+    border-left: 1px dashed black;
+    min-height: 700px;
 }
 
 div#menu ul
