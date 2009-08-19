@@ -1,5 +1,5 @@
 html, head, body, ul, ol, li, p, h1, h2, h3, h4, h5, h6, table, tr, td, tbody,
-thead, th, em, strong
+thead, th, em, strong, a
 {
     padding: 0px;
     margin: 0px;
@@ -90,18 +90,26 @@ p, td, th
     text-align: justify;
 }
 
-div.icon
+a.icon
 {
+    display: block;
     float: right;
     width: 250px;
-    height: 50px;
+    height: 48px;
+    padding: 3px;
+    cursor: pointer;
+}
+
+a.icon:hover
+{
     background: #cdd0e3;
     border: 1px solid #6e7bbd;
     padding: 2px;
 }
 
-div.icon a img
+a.icon img
 {
-    height: 50px;
+    height: 48px;
     float: left;
+    margin-right: 5px;
 }

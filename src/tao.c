@@ -163,7 +163,22 @@ static sexpr apply_replacement (sexpr rx, sexpr node, sexpr path, sexpr env)
     sexpr c = rx, d = sx_end_of_list, type, t, ta,
           e = lx_make_environment (sx_end_of_list);
 
-    if (!consp (rx))
+    if (environmentp (rx))
+    {
+        ta = sx_end_of_list;
+        t = lx_environment_alist (rx);
+
+        while (consp (t))
+        {
+            rx = car (t);
+            ta = cons(cons (car (rx),
+                            apply_replacement (cdr (rx), node, path, env)), ta);
+            t  = cdr (t);
+        }
+
+        return lx_make_environment (ta);
+    }
+    else if (!consp (rx))
     {
         return rx;
     }
@@ -226,6 +241,8 @@ static sexpr apply_replacement (sexpr rx, sexpr node, sexpr path, sexpr env)
     }
 
     d = sx_reverse (d);
+
+    e = apply_replacement(e, node, path, env);
 
     if (symbolp (type))
     {

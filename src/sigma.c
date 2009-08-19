@@ -58,7 +58,7 @@ define_string (str_dot,                        ".");
 define_string (str_icon,                       "icon");
 define_string (str_dot_ksu,                    ".ksu");
 define_string (str_contact_dash,               "contact-");
-define_string (str_png_contact_no_picture_png, "png/contact-no-picture.png");
+define_string (str_png_icon_no_picture_png,    "png/icon-no-picture.png");
 
 static sexpr webroot          = sx_nonexistent;
 
@@ -191,7 +191,7 @@ static sexpr contact (sexpr args, sexpr *env)
     }
     else
     {
-        sexpr t, v, icon = str_png_contact_no_picture_png,
+        sexpr t, v, icon = str_png_icon_no_picture_png,
               fn = sx_nonexistent, ln = sx_nonexistent, n = a, te;
 
         while (consp (args))
@@ -224,22 +224,9 @@ static sexpr contact (sexpr args, sexpr *env)
                                 lx_environment_lookup (*env, sym_extension),
                                 str_nil)),
                  cons (sx_join (fn, str_space, ln),
-                 cons (str_png_contact_no_picture_png, sx_end_of_list)))),
+                 cons (icon, sx_end_of_list)))),
                  sx_end_of_list)), &te);
     }
-}
-
-static sexpr icon (sexpr args, sexpr *env)
-{
-    sexpr ta = car (args), d = cdr (args), nm = car (d), ic = car (cdr (d));
-
-    return cons (sym_wrap, cons (lx_make_environment (cons (cons (sym_class,
-      str_icon), sx_end_of_list)), cons (cons (sym_link, cons
-      (lx_make_environment (cons (cons (sym_href, ta), sx_end_of_list)), cons
-      (cons (sym_image, cons (lx_make_environment (cons (cons (sym_src, ic),
-      sx_end_of_list)), sx_end_of_list)), sx_end_of_list))), cons (cons
-      (sym_link, cons (lx_make_environment (cons (cons (sym_href, ta),
-      sx_end_of_list)), cons (nm, sx_end_of_list))), sx_end_of_list))));
 }
 
 int cmain ()
@@ -254,8 +241,6 @@ int cmain ()
       (kho_environment, sym_menu, lx_foreign_lambda (sym_menu, menu));
     kho_environment = lx_environment_bind
       (kho_environment, sym_contact, lx_foreign_lambda (sym_contact, contact));
-    kho_environment = lx_environment_bind
-      (kho_environment, sym_icon, lx_foreign_lambda (sym_icon, icon));
 
     kho_debug (make_symbol ("sigma"));
 
