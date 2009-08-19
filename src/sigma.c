@@ -255,6 +255,12 @@ static sexpr contact (sexpr args, sexpr *env)
     }
 }
 
+static sexpr request (sexpr arguments, sexpr *env)
+{
+    relay_sub (arguments);
+    return sx_nonexistent;
+}
+
 int cmain ()
 {
     terminate_on_allocation_errors ();
@@ -267,6 +273,8 @@ int cmain ()
       (kho_environment, sym_menu, lx_foreign_lambda (sym_menu, menu));
     kho_environment = lx_environment_bind
       (kho_environment, sym_contact, lx_foreign_lambda (sym_contact, contact));
+    kho_environment = lx_environment_bind
+      (kho_environment, sym_request, lx_foreign_lambda (sym_request, request));
 
     kho_debug (make_symbol ("sigma"));
 
