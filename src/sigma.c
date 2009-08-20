@@ -46,6 +46,7 @@ define_symbol (sym_base_name,                  "base-name");
 define_symbol (sym_section,                    "section");
 define_symbol (sym_wrap,                       "wrap");
 define_symbol (sym_contact,                    "contact");
+define_symbol (sym_document,                   "document");
 define_symbol (sym_first_name,                 "first-name");
 define_symbol (sym_last_name,                  "last-name");
 define_symbol (sym_icon,                       "icon");
@@ -257,8 +258,56 @@ static sexpr contact (sexpr args, sexpr *env)
 
 static sexpr request (sexpr arguments, sexpr *env)
 {
-    relay_sub (arguments);
-    return sx_nonexistent;
+    sexpr a = arguments, r = sx_end_of_list, a2, a3;
+    char get_handled = 0;
+
+    while (consp (a))
+    {
+        a2 = car (a);
+        a3 = car (a2);
+
+        if (truep (equalp (a3, sym_get)))
+        {
+            sexpr t1 = cdr (a2), te = car (a2), t2 = cdr (t1), target = car(t2);
+            const char *etarget = sx_string (target);
+
+            while (etarget[0] == '/')
+            {
+                etarget++;
+            }
+
+            if ((etarget[0]=='c') && (etarget[1]=='o') && (etarget[2]=='n') &&
+                (etarget[3]=='t') && (etarget[4]=='a') && (etarget[5]=='c') &&
+                (etarget[6]=='t') && (etarget[7]=='-'))
+            {
+                get_handled = 1;
+
+                r = cons
+                    (cons (sym_object, cons (cons (sym_document,
+                           cons (make_string(etarget + 8), sx_end_of_list)),
+                           sx_end_of_list)),
+                     r);
+            }
+            else
+            {
+                r = cons (a2, r);
+            }
+        }
+        else
+        {
+            r = cons (a2, r);
+        }
+
+        a = cdr (a);
+    }
+
+    if (!get_handled)
+    {
+        relay_sub (arguments);
+        return sx_nonexistent;
+    }
+
+    return lx_eval (cons (sym_reply, sx_reverse (r)), &kho_environment);
 }
 
 int cmain ()

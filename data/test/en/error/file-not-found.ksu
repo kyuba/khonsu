@@ -1,5 +1,6 @@
 (object
   (document
     "File not Found"
+    (menu "menu")
     (paragraph
        "Sorry, the file you requested seems to have gone out for a smoke.")))
