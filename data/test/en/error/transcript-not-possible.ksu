@@ -1,6 +1,6 @@
 (object
   (document
     "Transcript not possible"
-    (menu "menu")
+    (menu)
     (paragraph
        "Sorry, Khonsu is unable to produce a suitable encoding that your browser can understand.")))

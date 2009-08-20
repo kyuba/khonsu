@@ -46,6 +46,7 @@ define_symbol (sym_base_name,                  "base-name");
 define_symbol (sym_section,                    "section");
 define_symbol (sym_wrap,                       "wrap");
 define_symbol (sym_contact,                    "contact");
+define_symbol (sym_contact_elaborate,          "contact-elaborate");
 define_symbol (sym_document,                   "document");
 define_symbol (sym_first_name,                 "first-name");
 define_symbol (sym_last_name,                  "last-name");
@@ -56,14 +57,16 @@ define_string (str_selected,                   "selected");
 define_string (str_menu,                       "menu");
 define_string (str_slash,                      "/");
 define_string (str_scontacts,                  "/contact/");
+define_string (str_contact_dash,               "contact-");
 define_string (str_space,                      " ");
 define_string (str_dot,                        ".");
 define_string (str_icon,                       "icon");
+define_string (str_Contact,                    "Contact");
 define_string (str_dot_ksu,                    ".ksu");
-define_string (str_contact_dash,               "contact-");
 define_string (str_png_icon_no_picture_png,    "png/icon-no-picture.png");
 
 static sexpr webroot          = sx_nonexistent;
+static sexpr mime_map         = sx_nonexistent;
 
 static void configure_callback (sexpr sx)
 {
@@ -72,6 +75,11 @@ static void configure_callback (sexpr sx)
     if (truep (equalp (a, sym_root)))
     {
         webroot = car (cdr (sx));
+    }
+    else if (truep (equalp (a, sym_map_extension)))
+    {
+        a = cdr (sx);
+        mime_map = lx_environment_bind (mime_map, car (a), car (cdr (a)));
     }
 }
 
@@ -168,6 +176,11 @@ static sexpr menu (sexpr arguments, sexpr *env)
 {
     sexpr sx = sx_end_of_list, title;
 
+    if (eolp (arguments))
+    {
+        return include_menu (title, *env);
+    }
+
     title     = car (arguments);
     arguments = cdr (arguments);
 
@@ -256,6 +269,109 @@ static sexpr contact (sexpr args, sexpr *env)
     }
 }
 
+static sexpr contact_elaborate (sexpr args, sexpr *env)
+{
+    sexpr a = car (args);
+    args    = cdr (args);
+
+    if (eolp (args))
+    {
+        return include_contact (a, *env);
+    }
+    else
+    {
+        sexpr t, v, icon = str_png_icon_no_picture_png,
+              fn = sx_nonexistent, ln = sx_nonexistent, sdesc = sx_nonexistent,
+              te;
+
+        while (consp (args))
+        {
+            a    = car (args);
+            t    = car (a);
+            v    = car (cdr (a));
+
+            if (truep (equalp (t, sym_first_name)))
+            {
+                fn = v;
+            }
+            else if (truep (equalp (t, sym_last_name)))
+            {
+                ln = v;
+            }
+            else if (truep (equalp (t, sym_icon)))
+            {
+                icon = v;
+            }
+            else if (truep (equalp (t, sym_short_description)))
+            {
+                sdesc = v;
+            }
+
+            args = cdr (args);
+        }
+
+        te = lx_environment_join (kho_environment, *env);
+
+        return lx_eval (cons (sym_object, cons (cons (sx_join (fn, str_space,
+            ln), cons (sdesc, cons (cons (sym_image, cons (icon,
+            sx_end_of_list)), sx_end_of_list))), sx_end_of_list)), &te);
+    }
+}
+
+static sexpr include_contact_document (sexpr to, sexpr e, sexpr re)
+{
+    sexpr te, type, tf, res = sx_end_of_list, tje;
+    int len = 0, i = 0;
+    const char *ts = sx_string (to);
+    char *tmp;
+    while (ts[len] != (char)0) 
+    {
+        if (ts[len] == '.') i = len;
+        len++;
+    }
+
+    if (i > 0)
+    {
+        len = i;
+        tmp = aalloc (len + 1);
+        for (i = 0; i < len; i++)
+        {
+            tmp[i] = ts[i];
+        }
+        tmp[i] = 0;
+        i++;
+
+        te   = make_string (tmp);
+        type = make_string (ts + i);
+
+        afree (i, tmp);
+
+        e  = lx_environment_bind
+                (e, sym_base_name,
+                 sx_join (str_contact_dash, te, str_nil));
+        e  = lx_environment_bind (e, sym_extension, type);
+
+        tf = lx_environment_lookup(mime_map, type);
+        e  = lx_environment_bind (e, sym_format, tf);
+    }
+
+    tje = lx_environment_join (kho_environment, e);
+
+    tje = lx_environment_unbind (tje, sym_contact);
+    tje = lx_environment_bind
+            (tje, sym_contact,
+             lx_foreign_lambda (sym_contact_elaborate, contact_elaborate));
+
+    res = lx_eval
+            (cons (sym_object, cons (cons (sym_document, cons (str_Contact, cons
+                (cons (sym_menu, sx_end_of_list),
+                       cons (cons (sym_contact, cons (te, sx_end_of_list)),
+                             sx_end_of_list)))), sx_end_of_list)),
+             &tje);
+
+    return cons (res, cons (e, re));
+}
+
 static sexpr request (sexpr arguments, sexpr *env)
 {
     sexpr a = arguments, r = sx_end_of_list, a2, a3;
@@ -268,7 +384,7 @@ static sexpr request (sexpr arguments, sexpr *env)
 
         if (truep (equalp (a3, sym_get)))
         {
-            sexpr t1 = cdr (a2), te = car (a2), t2 = cdr (t1), target = car(t2);
+            sexpr t1 = cdr (a2), te = car (t1), t2 = cdr (t1), target = car(t2);
             const char *etarget = sx_string (target);
 
             while (etarget[0] == '/')
@@ -281,12 +397,7 @@ static sexpr request (sexpr arguments, sexpr *env)
                 (etarget[6]=='t') && (etarget[7]=='-'))
             {
                 get_handled = 1;
-
-                r = cons
-                    (cons (sym_object, cons (cons (sym_document,
-                           cons (make_string(etarget + 8), sx_end_of_list)),
-                           sx_end_of_list)),
-                     r);
+                r = include_contact_document (make_string(etarget + 8), te, r);
             }
             else
             {
@@ -317,6 +428,8 @@ int cmain ()
     kho_configure_callback = configure_callback;
 
     initialise_khonsu ();
+
+    gc_add_root (&mime_map);
 
     kho_environment = lx_environment_bind
       (kho_environment, sym_menu, lx_foreign_lambda (sym_menu, menu));

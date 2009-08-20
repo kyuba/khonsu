@@ -51,6 +51,16 @@
 
   (code "xmlise"))
 
+(programme "i18n" libcurie
+  (name "I18n")
+  (description "Khonsu Internationalisation Support")
+  (version "1")
+  (url "http://kyuba.org/")
+
+  (libraries "khonsu" "seteh")
+
+  (code "i18n"))
+
 (programme "sigma" libcurie
   (name "Sigma")
   (description "XML/XHTML goodies")

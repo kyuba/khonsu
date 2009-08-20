@@ -29,6 +29,7 @@
 #include <khonsu/khonsu.h>
 #include <seteh/lambda.h>
 #include <curie/multiplex.h>
+#include <curie/signal.h>
 #include <curie/gc.h>
 #include <curie/main.h>
 #include <curie/memory.h>

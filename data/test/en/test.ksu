@@ -1,7 +1,7 @@
 (object
   (document
     "test page"
-    (menu "menu")
+    (menu)
     (paragraph "common text 1" "common text 3 ... "
       (paragraph "common text 5" "common text 6"))
     (section "title"

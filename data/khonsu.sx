@@ -1,4 +1,4 @@
-(pipeline "xmlise" "tao" "sigma" "khonsu-backend")
+(pipeline "xmlise" "tao" "i18n" "sigma" "khonsu-backend")
 ; (pipeline "tao" "sigma" "khonsu-backend")
 
 ; (root "/var/www/htdocs")

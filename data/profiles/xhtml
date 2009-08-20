@@ -52,7 +52,7 @@
 
   (tao:replace
      ("image") .
-     (img (tao:all)))
+     (img (ε (src . (tao:item 1)))))
 
   (tao:replace
      ("list") .

@@ -34,17 +34,9 @@
 #include <curie/gc.h>
 #include <curie/signal.h>
 
-#define MAX_HEADER_FIELD_LENGTH 4096
-
-define_symbol (sym_accept_language,  "accept-language");
-define_symbol (sym_Vary,             "Vary");
-define_symbol (sym_default_language, "default-language");
-define_symbol (sym_menu,             "menu");
 define_symbol (sym_include,          "include");
 define_symbol (sym_base_name,        "base-name");
 define_symbol (sym_extension,        "extension");
-
-define_string (str_Accept_Language,  "Accept-Language");
 define_string (str_error_file_not_found_xhtml,
                                      "/error/file-not-found.xhtml");
 define_string (str_dot,              ".");
@@ -52,7 +44,6 @@ define_string (str_dot_ksu,          ".ksu");
 
 static sexpr webroot          = sx_nonexistent;
 static sexpr mime_map         = sx_nonexistent;
-static sexpr default_language = sx_nonexistent;
 
 static void configure_callback (sexpr sx)
 {
@@ -67,76 +58,6 @@ static void configure_callback (sexpr sx)
         a = cdr (sx);
         mime_map = lx_environment_bind (mime_map, car (a), car (cdr (a)));
     }
-    else if (truep (equalp (a, sym_default_language)))
-    {
-        default_language = car (cdr (sx));
-    }
-}
-
-static sexpr get_acceptable_languages (sexpr lq)
-{
-    sexpr lcodes = sx_end_of_list;
-    char have_default = 0;
-
-    if (!nexp (lq))
-    {
-        const char *lqs = sx_string (lq);
-        char lqsm [MAX_HEADER_FIELD_LENGTH], semicolon;
-        sexpr n;
-        int i = 0, il = 0;
-
-        while (lqs[i] != (char)0)
-        {
-            lqsm[i] = lqs[i];
-            if (i >= (MAX_HEADER_FIELD_LENGTH - 1)) break;
-            i++;
-        }
-
-        lqsm[i] = (char)0;
-
-        for (i = 0; lqsm[i] != (char)0; i++)
-        {
-            if ((lqsm[i] == ',') || (semicolon = (lqsm[i] == ';')))
-            {
-                lqsm[i] = (char)0;
-
-                n = make_string (lqsm + il);
-                if (!have_default && truep (equalp (n, default_language)))
-                {
-                    have_default = 1;
-                }
-
-                lcodes = cons (n, lcodes);
-
-                if (semicolon)
-                {
-                    i++;
-                    while ((lqsm[i] != 0) && (lqsm[i] != ','))
-                    {
-                        if (lqsm[i] == 0) break;
-                        i++;
-                    }
-                }
-
-                il = i + 1;
-            }
-        }
-
-        if (il < i)
-        {
-            lcodes = cons (make_string (lqsm + il), lcodes);
-        }
-    }
-
-
-    if (!have_default)
-    {
-        lcodes = cons (default_language, lcodes);
-    }
-
-    lcodes = sx_reverse (lcodes);
-
-    return lcodes;
 }
 
 static sexpr include (sexpr arguments, sexpr *env)
@@ -179,13 +100,10 @@ static sexpr include (sexpr arguments, sexpr *env)
 
             afree (i, tmp);
 
-            lcodes = get_acceptable_languages
-                    (lx_environment_lookup (e, sym_accept_language));
+            lcodes = (lx_environment_lookup (e, sym_language));
 
-            e = lx_environment_bind (e, sym_language, lcodes);
             e = lx_environment_bind (e, sym_base_name, te);
             e = lx_environment_bind (e, sym_extension, type);
-            e = lx_environment_bind (e, sym_Vary, str_Accept_Language);
 
             te = sx_join (te, str_dot_ksu, str_nil);
 
