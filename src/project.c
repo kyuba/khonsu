@@ -45,24 +45,23 @@ define_symbol (sym_extension,                  "extension");
 define_symbol (sym_base_name,                  "base-name");
 define_symbol (sym_section,                    "section");
 define_symbol (sym_wrap,                       "wrap");
-define_symbol (sym_contact,                    "contact");
 define_symbol (sym_document,                   "document");
-define_symbol (sym_first_name,                 "first-name");
-define_symbol (sym_last_name,                  "last-name");
 define_symbol (sym_icon,                       "icon");
+define_symbol (sym_description,                "description");
 define_symbol (sym_short_description,          "short-description");
 define_symbol (sym_sub_section,                "sub-section");
 define_symbol (sym_elaborate,                  "elaborate");
+define_symbol (sym_project,                    "project");
 define_string (str_selected,                   "selected");
 define_string (str_menu,                       "menu");
 define_string (str_slash,                      "/");
-define_string (str_scontacts,                  "/contact/");
-define_string (str_contact_dash,               "contact-");
-define_string (str_contact_slash,              "contact/");
+define_string (str_sprojects,                  "/project/");
+define_string (str_project_dash,               "project-");
+define_string (str_project_slash,              "project/");
 define_string (str_space,                      " ");
 define_string (str_dot,                        ".");
 define_string (str_icon,                       "icon");
-define_string (str_Contact,                    "Contact");
+define_string (str_Project,                    "Project");
 define_string (str_dot_ksu,                    ".ksu");
 define_string (str_png_icon_no_picture_png,    "png/icon-no-picture.png");
 
@@ -83,7 +82,7 @@ static sexpr include_file (sexpr fn, sexpr env)
     struct sexpr_io *io = sx_open_io (io_open_read (sx_string (fn)),
                                       io_open_null);
     sexpr data = sx_end_of_list, n, r,
-          tje = lx_environment_join (kho_environment, env);
+    tje = lx_environment_join (kho_environment, env);
 
     while (!eofp (r = sx_read (io)))
     {
@@ -108,98 +107,9 @@ static sexpr include_file (sexpr fn, sexpr env)
     return sx_reverse (data);
 }
 
-static sexpr include_menu (sexpr file, sexpr env)
+static sexpr include_project (sexpr file, sexpr env)
 {
-    sexpr lcodes = lx_environment_lookup (env, sym_language), fn;
-
-    while (consp (lcodes))
-    {
-        fn = sx_join (webroot, str_slash,
-                      sx_join (car (lcodes), str_slash,
-                               sx_join (file, str_dot_ksu, str_nil)));
-
-        if (truep (filep (fn)))
-        {
-            return include_file (fn, env);
-        }
-
-        lcodes = cdr (lcodes);
-    }
-
-    return sx_nonexistent;
-}
-
-static sexpr sub_menu (sexpr arguments, sexpr *env)
-{
-    sexpr sx = sx_end_of_list, target, name, t, e, title,
-          ext = lx_environment_lookup (*env, sym_extension);
-
-    title     = car (arguments);
-    arguments = cdr (arguments);
-
-    while (consp (arguments))
-    {
-        t      = car (arguments);
-        target = car (t);
-        name   = car (cdr (t));
-
-        if (truep (equalp (target,
-            lx_environment_lookup (*env, sym_base_name))))
-        {
-            e  = lx_make_environment
-                    (cons (cons (sym_class, str_selected), sx_end_of_list));
-        }
-        else
-        {
-            e  = lx_make_environment (sx_end_of_list);
-        }
-
-        sx = cons (cons (sym_item, cons (e, cons (cons (sym_link, cons
-                (lx_make_environment (cons (cons (sym_href, (nexp (ext) ? target
-                 : sx_join (target, str_dot, ext))),
-                 sx_end_of_list)), cons (name,
-                 sx_end_of_list))), sx_end_of_list))), sx);
-
-        arguments = cdr (arguments);
-    }
-
-    return cons (cons (sym_sub_section, cons (title,
-                 cons (cons (sym_list, sx_reverse (sx)), sx_end_of_list))),
-                       sx_end_of_list);
-}
-
-static sexpr menu (sexpr arguments, sexpr *env)
-{
-    sexpr sx = sx_end_of_list, title;
-
-    if (eolp (arguments))
-    {
-        return include_menu (title, *env);
-    }
-
-    title     = car (arguments);
-    arguments = cdr (arguments);
-
-    if (eolp (arguments))
-    {
-        return include_menu (title, *env);
-    }
-
-    while (consp (arguments))
-    {
-        sx = cons (sub_menu (car (arguments), env), sx);
-
-        arguments = cdr (arguments);
-    }
-
-    return cons (sym_wrap, cons (lx_make_environment (cons (cons (sym_id,
-             str_menu), sx_end_of_list)), cons (cons (sym_section, cons (title,
-             cons (sx_reverse (sx), sx_end_of_list))), sx_end_of_list)));
-}
-
-static sexpr include_contact (sexpr file, sexpr env)
-{
-    sexpr fn  = sx_join (webroot, str_scontacts,
+    sexpr fn  = sx_join (webroot, str_sprojects,
                          sx_join (file, str_dot_ksu, str_nil));
 
     if (truep (filep (fn)))
@@ -207,71 +117,69 @@ static sexpr include_contact (sexpr file, sexpr env)
         return include_file (fn, env);
     }
 
-    return cons (sym_contact, cons (file, sx_end_of_list));
+    return cons (sym_project, cons (file, sx_end_of_list));
 }
 
-static sexpr contact_elaborate (sexpr args, sexpr *env)
+static sexpr project_elaborate (sexpr args, sexpr *env)
 {
-    sexpr a = car (args);
-    args    = cdr (args);
-
-    sexpr t, v, icon = str_png_icon_no_picture_png,
-          fn = sx_nonexistent, ln = sx_nonexistent, sdesc = sx_nonexistent,
-          te;
-
-    while (consp (args))
-    {
-        a    = car (args);
-        t    = car (a);
-        v    = car (cdr (a));
-
-        if (truep (equalp (t, sym_first_name)))
-        {
-            fn = v;
-        }
-        else if (truep (equalp (t, sym_last_name)))
-        {
-            ln = v;
-        }
-        else if (truep (equalp (t, sym_icon)))
-        {
-            icon = v;
-        }
-        else if (truep (equalp (t, sym_short_description)))
-        {
-            sdesc = v;
-        }
-
-        args = cdr (args);
-    }
-
-    te = lx_environment_join (kho_environment, *env);
-
-    return lx_eval (cons (sym_object, cons (cons (sym_document,
-        cons (str_Contact, cons (cons (sym_menu, sx_end_of_list),
-        cons(sx_join (fn, str_space, ln), cons (sdesc, cons (cons
-        (sym_image, cons (icon, sx_end_of_list)), sx_end_of_list)))))),
-        sx_end_of_list)), &te);
-}
-
-static sexpr contact (sexpr args, sexpr *env)
-{
-    sexpr a = car (args);
-    args    = cdr (args);
+    sexpr pn = car (args);
+    args     = cdr (args);
 
     if (eolp (args))
     {
-        return include_contact (a, *env);
+        return include_project (pn, *env);
     }
     else
     {
-        sexpr t, v, icon = str_png_icon_no_picture_png,
-              fn = sx_nonexistent, ln = sx_nonexistent, sdesc = sx_nonexistent,
-              n = a, te, ext;
+        sexpr t, v, icon = str_png_icon_no_picture_png, desc = sx_nonexistent,
+              sdesc = sx_nonexistent, a;
+
+        while (consp (args))
+        {
+            a    = car (args);
+            t    = car (a);
+            v    = car (cdr (a));
+
+            if (truep (equalp (t, sym_icon)))
+            {
+                icon = v;
+            }
+            else if (truep (equalp (t, sym_description)))
+            {
+                desc = cdr (a);
+            }
+            else if (truep (equalp (t, sym_short_description)))
+            {
+                sdesc = cdr (a);
+            }
+
+            args = cdr (args);
+        }
+
+        return cons (sym_object, cons (cons (sym_document, cons (sx_join
+            (str_Project, str_space, pn), cons (cons (sym_menu, sx_end_of_list),
+            cons (desc, cons (cons (sym_image, cons (icon, sx_end_of_list)),
+            sx_end_of_list))))), sx_end_of_list));
+    }
+}
+
+static sexpr project (sexpr args, sexpr *env)
+{
+    sexpr pn = car (args);
+    args     = cdr (args);
+
+    if (eolp (args))
+    {
+        return include_project (pn, *env);
+    }
+    else
+    {
+        sexpr t, v, icon = str_png_icon_no_picture_png, desc = sx_nonexistent,
+              sdesc = sx_nonexistent, a, ext;
 
         if (truep (lx_environment_lookup (*env, sym_elaborate)))
         {
-            return contact_elaborate (cons (a, args), env);
+            return project_elaborate (cons (a, args), env);
         }
 
         ext = lx_environment_lookup (*env, sym_extension);
@@ -282,17 +190,13 @@ static sexpr contact (sexpr args, sexpr *env)
             t    = car (a);
             v    = car (cdr (a));
 
-            if (truep (equalp (t, sym_first_name)))
-            {
-                fn = v;
-            }
-            else if (truep (equalp (t, sym_last_name)))
-            {
-                ln = v;
-            }
-            else if (truep (equalp (t, sym_icon)))
+            if (truep (equalp (t, sym_icon)))
             {
                 icon = v;
+            }
+            else if (truep (equalp (t, sym_description)))
+            {
+                desc = v;
             }
             else if (truep (equalp (t, sym_short_description)))
             {
@@ -302,16 +206,14 @@ static sexpr contact (sexpr args, sexpr *env)
             args = cdr (args);
         }
 
-        te = lx_environment_join (kho_environment, *env);
-
-        return lx_eval (cons (sym_object, cons (cons (sym_icon,
-                 cons (sx_join (str_contact_dash, n,
+        return cons (sym_object, cons (cons (sym_icon,
+                 cons (sx_join (str_project_dash, pn,
                        (nexp (ext) ? str_nil
                                    : sx_join (str_dot, ext, str_nil))),
-                 cons (sx_join (fn, str_space, ln),
+                 cons (sx_join (str_Project, str_space, pn),
                  cons (icon,
                  cons (sdesc, sx_end_of_list))))),
-                 sx_end_of_list)), &te);
+                 sx_end_of_list));
     }
 }
 
@@ -344,11 +246,11 @@ static sexpr request (sexpr arguments, sexpr *env)
                     (cons (cons (sym_elaborate, sx_true), sx_end_of_list));
             }
 
-            if ((etarget[0]=='c') && (etarget[1]=='o') && (etarget[2]=='n') &&
-                (etarget[3]=='t') && (etarget[4]=='a') && (etarget[5]=='c') &&
+            if ((etarget[0]=='p') && (etarget[1]=='r') && (etarget[2]=='o') &&
+                (etarget[3]=='j') && (etarget[4]=='e') && (etarget[5]=='c') &&
                 (etarget[6]=='t') && (etarget[7]=='-'))
             {
-                a2 = sx_join (str_contact_slash,make_string(etarget+8),str_nil);
+                a2 = sx_join (str_project_slash,make_string(etarget+8),str_nil);
                 r = cons (cons(sym_get,cons (te,cons (a2, sx_end_of_list))),r);
             }
             else
@@ -377,9 +279,7 @@ int cmain ()
     initialise_khonsu ();
 
     kho_environment = lx_environment_bind
-      (kho_environment, sym_menu, lx_foreign_lambda (sym_menu, menu));
-    kho_environment = lx_environment_bind
-      (kho_environment, sym_contact, lx_foreign_lambda (sym_contact, contact));
+      (kho_environment, sym_project, lx_foreign_lambda (sym_project, project));
     kho_environment = lx_environment_bind
       (kho_environment, sym_request, lx_foreign_lambda (sym_request, request));
 

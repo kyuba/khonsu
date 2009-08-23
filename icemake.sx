@@ -71,6 +71,16 @@
 
   (code "sigma"))
 
+(programme "project" libcurie
+  (name "Khonsu Projects")
+  (description "Software Project Management")
+  (version "1")
+  (url "http://kyuba.org/")
+
+  (libraries "khonsu" "seteh")
+
+  (code "project"))
+
 (programme "khonsu-cgi" libcurie
   (name "Khonsu CGI")
   (description "CGI Interface for Khonsu")
