@@ -170,6 +170,9 @@ static sexpr include (sexpr arguments, sexpr *env)
           data = sx_end_of_list, r, tje, lang, lcodes, te, tf,
           type = sx_nonexistent, lcc;
     struct sexpr_io *io;
+    int len = 0, i = 0;
+    const char *ts = sx_string (to);
+    char *tmp;
 
     if (truep (filep (t)))
     {
@@ -227,89 +230,84 @@ static sexpr include (sexpr arguments, sexpr *env)
         lcc = cdr (lcc);
     }
 
+    while (ts[len] != (char)0) 
     {
-        int len = 0, i = 0;
-        const char *ts = sx_string (to);
-        char *tmp;
-        while (ts[len] != (char)0) 
+        if (ts[len] == '.') i = len;
+        len++;
+    }
+
+    if (i > 0)
+    {
+        len = i;
+        tmp = aalloc (len + 1);
+        for (i = 0; i < len; i++)
         {
-            if (ts[len] == '.') i = len;
-            len++;
+            tmp[i] = ts[i];
         }
+        tmp[i] = 0;
+        i++;
 
-        if (i > 0)
+        te   = make_string (tmp);
+        type = make_string (ts + i);
+
+        afree (i, tmp);
+
+        e = lx_environment_bind (e, sym_base_name, te);
+        e = lx_environment_bind (e, sym_extension, type);
+
+        te = sx_join (te, str_dot_ksu, str_nil);
+
+        while (consp (lcodes))
         {
-            len = i;
-            tmp = aalloc (len + 1);
-            for (i = 0; i < len; i++)
+            lang = car (lcodes);
+
+            t = sx_join (webroot, str_slash,
+                            sx_join (lang, str_slash, te));
+
+            if (truep (filep (t)))
             {
-                tmp[i] = ts[i];
-            }
-            tmp[i] = 0;
-            i++;
+                tf = lx_environment_lookup(mime_map, type);
+                include:
 
-            te   = make_string (tmp);
-            type = make_string (ts + i);
-
-            afree (i, tmp);
-
-            e = lx_environment_bind (e, sym_base_name, te);
-            e = lx_environment_bind (e, sym_extension, type);
-
-            te = sx_join (te, str_dot_ksu, str_nil);
-
-            while (consp (lcodes))
-            {
-                lang = car (lcodes);
-
-                t = sx_join (webroot, str_slash,
-                             sx_join (lang, str_slash, te));
-
-                if (truep (filep (t)))
+                if (!nexp (tf))
                 {
-                    tf = lx_environment_lookup(mime_map, type);
-                  include:
+                    e = lx_environment_bind (e, sym_format, tf);
 
-                    if (!nexp (tf))
+                    io = sx_open_io (io_open_read (sx_string (t)),
+                                        io_open_null);
+
+                    while (!eofp (r = sx_read (io)))
                     {
-                        e = lx_environment_bind (e, sym_format, tf);
-
-                        io = sx_open_io (io_open_read (sx_string (t)),
-                                         io_open_null);
-
-                        while (!eofp (r = sx_read (io)))
+                        if (!nexp (r))
                         {
-                            if (!nexp (r))
+                            sexpr n = car (r);
+                            if (truep (equalp (sym_object, n)))
                             {
-                                sexpr n = car (r);
-                                if (truep (equalp (sym_object, n)))
-                                {
-                                    tje = lx_environment_join
-                                            (kho_environment, *env);
-                                    tje = lx_environment_join (tje, e);
-                                    data = cons (lx_eval (r, &tje), data);
-                                }
-                                else
-                                {
-                                    data = cons (r, data);
-                                }
+                                tje = lx_environment_join
+                                        (kho_environment, *env);
+                                tje = lx_environment_join (tje, e);
+                                data = cons (lx_eval (r, &tje), data);
+                            }
+                            else
+                            {
+                                data = cons (r, data);
                             }
                         }
-
-                        sx_close_io (io);
-
-                        return cons (e, sx_reverse (data));
                     }
-                    else
-                    {
-                        return cons (e, cons (cons (sym_object,
-                                     cons (sym_verbatim, cons (t,
-                                           sx_end_of_list))), sx_end_of_list));
-                    }
+
+                    sx_close_io (io);
+
+                    return cons (e, sx_reverse (data));
                 }
-
-                lcodes = cdr (lcodes);
+                else
+                {
+                    return cons (e, cons (cons (sym_object,
+                                    cons (sym_verbatim, cons (t,
+                                        sx_end_of_list))), sx_end_of_list));
+                }
             }
+
+            lcodes = cdr (lcodes);
         }
     }
 

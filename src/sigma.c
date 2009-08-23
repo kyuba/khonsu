@@ -129,6 +129,46 @@ static sexpr include_menu (sexpr file, sexpr env)
     return sx_nonexistent;
 }
 
+static sexpr menu_selected_environment (sexpr a, sexpr b)
+{
+    sexpr e;
+    const char *as = sx_string (a), *bs = sx_string (b);
+    int i = 0, j = 0;
+
+    while (as[i] && bs[j])
+    {
+        if (as[i] == bs[j])
+        {
+            i++;
+            j++;
+        }
+        else if ((as[i] == '/') || (as[i] == '-'))
+        {
+            i++;
+        }
+        else if ((bs[j] == '/') || (bs[j] == '-'))
+        {
+            j++;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    if ((as[i] == bs[j]) && (as[i] == (char)0))
+    {
+        e  = lx_make_environment
+                (cons (cons (sym_class, str_selected), sx_end_of_list));
+    }
+    else
+    {
+        e  = lx_make_environment (sx_end_of_list);
+    }
+
+    return e;
+}
+
 static sexpr sub_menu (sexpr arguments, sexpr *env)
 {
     sexpr sx = sx_end_of_list, target, name, t, e, title,
@@ -143,16 +183,8 @@ static sexpr sub_menu (sexpr arguments, sexpr *env)
         target = car (t);
         name   = car (cdr (t));
 
-        if (truep (equalp (target,
-            lx_environment_lookup (*env, sym_base_name))))
-        {
-            e  = lx_make_environment
-                    (cons (cons (sym_class, str_selected), sx_end_of_list));
-        }
-        else
-        {
-            e  = lx_make_environment (sx_end_of_list);
-        }
+        e = menu_selected_environment
+                (target, lx_environment_lookup (*env, sym_base_name));
 
         sx = cons (cons (sym_item, cons (e, cons (cons (sym_link, cons
                 (lx_make_environment (cons (cons (sym_href, (nexp (ext) ? target
