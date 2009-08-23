@@ -179,7 +179,7 @@ static sexpr project (sexpr args, sexpr *env)
 
         if (truep (lx_environment_lookup (*env, sym_elaborate)))
         {
-            return project_elaborate (cons (a, args), env);
+            return project_elaborate (cons (pn, args), env);
         }
 
         ext = lx_environment_lookup (*env, sym_extension);
@@ -230,11 +230,6 @@ static sexpr request (sexpr arguments, sexpr *env)
         {
             sexpr t1 = cdr (a2), te = car (t1), t2 = cdr (t1), target = car(t2);
             const char *etarget = sx_string (target);
-
-            while (etarget[0] == '/')
-            {
-                etarget++;
-            }
 
             if (environmentp (te))
             {

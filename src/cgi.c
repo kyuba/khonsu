@@ -54,7 +54,7 @@ define_symbol (sym_request_body_length, "request-body-length");
 define_symbol (sym_method,              "method");
 define_symbol (sym_file_not_found,      "file-not-found");
 
-define_string (str_index,               "index.xhtml");
+define_string (str_index,               "index");
 define_string (str_nil,                 "");
 
 define_string (str_error_transcript_not_possible_xhtml,
@@ -78,6 +78,9 @@ define_string (str_text_plain,          "text/plain");
 #define HTTP_CONTENT_LENGTH       "Content-Length: "
 #define HTTP_CONTENT_TYPE         "Content-Type: "
 
+#define BAD_OUTPUT\
+   "Content-Type: text/html\r\nStatus: 503 Broken Connection\r\n\r\n<html><head><title>Broken Connection</title></head><body><h1>Broken Connection</h1><p>Khonsu's CGI redirection programme seems to have trouble connecting to the core programme. This is usually a problem with the server's configuration.</p></body></html>"
+
 #define MAX_NUM_LENGTH            32
 
 static const char *socket_path = "khonsu-socket";
@@ -87,6 +90,7 @@ static sexpr id_token;
 static struct sexpr_io *io;
 static sexpr rq_environment;
 static sexpr rq_method;
+static char no_output = 1;
 
 static void request (sexpr env, sexpr sn)
 {
@@ -265,6 +269,8 @@ static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
                     io_write (out, output, n);
                 }
 
+                no_output = 0;
+
                 multiplex_del_sexpr (io);
             }
         }
@@ -323,8 +329,17 @@ int cmain ()
         if ((j == (sizeof (SCRIPT_NAME_ENVIRONMENT) - 1)) &&
             (t[0] == SCRIPT_NAME_ENVIRONMENT[0]))
         {
+            const char *escn;
             script_name =
                 make_string (t + (sizeof (SCRIPT_NAME_ENVIRONMENT) - 1));
+            escn = sx_string (script_name);
+
+            while (escn[0] == '/')
+            {
+                escn++;
+            }
+
+            script_name = make_string (escn);
             continue;
         }
 
@@ -396,6 +411,11 @@ int cmain ()
     request (env, script_name);
 
     while (multiplex () != mx_nothing_to_do);
+
+    if (no_output)
+    {
+        io_write (out, BAD_OUTPUT, sizeof(BAD_OUTPUT));
+    }
 
     return 0;
 }

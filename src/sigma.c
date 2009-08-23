@@ -361,11 +361,6 @@ static sexpr request (sexpr arguments, sexpr *env)
             sexpr t1 = cdr (a2), te = car (t1), t2 = cdr (t1), target = car(t2);
             const char *etarget = sx_string (target);
 
-            while (etarget[0] == '/')
-            {
-                etarget++;
-            }
-
             if (environmentp (te))
             {
                 te = lx_environment_bind (te, sym_elaborate, sx_true);
