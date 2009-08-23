@@ -26,6 +26,7 @@
  * THE SOFTWARE.
 */
 
+#include <khonsu/khonsu.h>
 #include <seteh/lambda.h>
 #include <curie/sexpr.h>
 #include <curie/main.h>
@@ -34,28 +35,19 @@
 #include <curie/network.h>
 #include <curie/io.h>
 
-define_symbol (sym_request,             "request");
-define_symbol (sym_reply,               "reply");
-define_symbol (sym_get,                 "get");
 define_symbol (sym_post,                "post");
 define_symbol (sym_put,                 "put");
 define_symbol (sym_delete,              "delete");
 define_symbol (sym_options,             "options");
-define_symbol (sym_verbatim,            "verbatim");
-define_symbol (sym_format,              "format");
 define_symbol (sym_head,                "head");
-define_symbol (sym_error,               "error");
-define_symbol (sym_language,            "language");
 define_symbol (sym_accept,              "accept");
 define_symbol (sym_accept_language,     "accept-language");
 define_symbol (sym_user_agent,          "user-agent");
 define_symbol (sym_request_body_type,   "request-body-type");
 define_symbol (sym_request_body_length, "request-body-length");
 define_symbol (sym_method,              "method");
-define_symbol (sym_file_not_found,      "file-not-found");
 
 define_string (str_index,               "index");
-define_string (str_nil,                 "");
 
 define_string (str_error_transcript_not_possible_xhtml,
                                         "/error/transcript-not-possible.xhtml");
@@ -329,17 +321,10 @@ int cmain ()
         if ((j == (sizeof (SCRIPT_NAME_ENVIRONMENT) - 1)) &&
             (t[0] == SCRIPT_NAME_ENVIRONMENT[0]))
         {
-            const char *escn;
             script_name =
-                make_string (t + (sizeof (SCRIPT_NAME_ENVIRONMENT) - 1));
-            escn = sx_string (script_name);
+                kho_canonicalise
+                    (make_string (t + (sizeof (SCRIPT_NAME_ENVIRONMENT) - 1)));
 
-            while (escn[0] == '/')
-            {
-                escn++;
-            }
-
-            script_name = make_string (escn);
             continue;
         }
 

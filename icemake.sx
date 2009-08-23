@@ -90,6 +90,6 @@
   (version "1")
   (url "http://kyuba.org/")
 
-  (libraries "seteh")
+  (libraries "seteh" "khonsu")
 
   (code "cgi"))

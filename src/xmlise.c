@@ -32,15 +32,16 @@
 #include <curie/memory.h>
 #include <curie/gc.h>
 
-define_string (str_lt,      "<");
-define_string (str_ltslash, "</");
-define_string (str_gt,      ">");
-define_string (str_slashgt, "/>");
-define_string (str_eqquot,  "=\"");
-define_string (str_quot,    "\"");
-define_string (str_space,   " ");
+define_string (str_lt,        "<");
+define_string (str_ltslash,   "</");
+define_string (str_gt,        ">");
+define_string (str_slashgt,   "/>");
+define_string (str_eqquot,    "=\"");
+define_string (str_quot,      "\"");
+define_string (str_space,     " ");
+define_string (str_text_html, "text/html");
 
-static sexpr object (sexpr arguments, sexpr *env)
+static sexpr object_xml (sexpr arguments, sexpr *env)
 {
     sexpr r = str_nil, t = car (arguments), a;
     char have_content = 0, symbol_t = 0;
@@ -95,7 +96,7 @@ static sexpr object (sexpr arguments, sexpr *env)
                 r = sx_join (r, str_gt, str_nil);
             }
 
-            r = sx_join (r, object (a, env), str_nil);
+            r = sx_join (r, object_xml (a, env), str_nil);
             have_content = 1;
         }
         else if (stringp (a))
@@ -125,6 +126,100 @@ static sexpr object (sexpr arguments, sexpr *env)
     }
 
     return r;
+}
+
+static sexpr object_sgml (sexpr arguments, sexpr *env)
+{
+    sexpr r = str_nil, t = car (arguments), a;
+    char have_content = 0, symbol_t = 0;
+
+    if (truep (equalp (sym_object, t)))
+    {
+        arguments = cdr (arguments);
+        t = car (arguments);
+    }
+
+    symbol_t = symbolp (t);
+
+    if (symbol_t)
+    {
+        r = sx_join (str_lt, t, str_nil);
+        arguments = cdr (arguments);
+
+        a = car (arguments);
+        if (environmentp (a))
+        {
+            sexpr tb, tba, tbb;
+            a = lx_environment_alist (a);
+
+            while (consp (a))
+            {
+                tb = car (a);
+                tba = car (tb);
+                tbb = cdr (tb);
+
+                if (symbolp (tba) && stringp (tbb))
+                {
+                    r = sx_join (r, str_space, tba);
+                    r = sx_join (r, str_eqquot, tbb);
+                    r = sx_join (r, str_quot, str_nil);
+                }
+
+                a = cdr (a);
+            }
+
+            arguments = cdr (arguments);
+        }
+    }
+
+    while (consp (arguments))
+    {
+        a = car (arguments);
+
+        if (consp (a))
+        {
+            if (symbol_t && !have_content)
+            {
+                r = sx_join (r, str_gt, str_nil);
+            }
+
+            r = sx_join (r, object_sgml (a, env), str_nil);
+            have_content = 1;
+        }
+        else if (stringp (a))
+        {
+            if (symbol_t && !have_content)
+            {
+                r = sx_join (r, str_gt, str_nil);
+            }
+
+            r = sx_join (r, a, str_nil);
+            have_content = 1;
+        }
+
+        arguments = cdr (arguments);
+    }
+
+    if (symbol_t)
+    {
+        if (!have_content)
+        {
+            r = sx_join (r, str_gt, str_nil);
+        }
+        else
+        {
+            r = sx_join (r, sx_join (str_ltslash, t, str_gt), str_nil);
+        }
+    }
+
+    return r;
+}
+
+static sexpr object (sexpr arguments, sexpr *env)
+{
+    return truep (equalp (lx_environment_lookup (*env, sym_format),
+                          str_text_html)) ? object_sgml (arguments, env)
+                                          : object_xml (arguments, env);
 }
 
 int cmain ()
