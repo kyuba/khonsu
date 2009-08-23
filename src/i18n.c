@@ -97,7 +97,16 @@ static sexpr get_acceptable_languages (sexpr lq)
                     }
                 }
 
-                il = i + 1;
+                i++;
+
+                while ((lqsm[i] == ' ') || (lqsm[i] == '\t'))
+                {
+                    i++;
+                }
+
+                if (lqsm[i] == 0) break;
+
+                il = i;
             }
         }
 
@@ -113,8 +122,6 @@ static sexpr get_acceptable_languages (sexpr lq)
         lcodes = cons (default_language, lcodes);
     }
 
-    lcodes = sx_reverse (lcodes);
-
     return lcodes;
 }
 
@@ -129,7 +136,7 @@ static sexpr request (sexpr arguments, sexpr *env)
 
         if (truep (equalp (a3, sym_get)))
         {
-            sexpr t1 = cdr (a2), e = car (a2);
+            sexpr t1 = cdr (a2), e = car (t1);
 
             if (environmentp (e))
             {

@@ -13,3 +13,4 @@
 (default-language "en")
 
 (map-extension "raw" "text/s-expression-data")
+(default-type "application/xhtml+xml")
