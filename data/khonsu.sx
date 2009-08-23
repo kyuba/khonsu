@@ -3,10 +3,10 @@
 
 ; (root "/var/www/htdocs")
 (root "data/test")
-; (tao-profiles "/var/www/htdocs/profiles/([a-zA-Z]|-)+")
-(tao-profiles "data/profiles/([a-zA-Z]|-)+")
-; (tao-themes "/var/www/htdocs/themes/([a-zA-Z]|-)+")
-(tao-themes "data/themes/([a-zA-Z]|-)+")
+; (tao-profiles "/var/www/htdocs/profiles/([a-zA-Z0-9]|-)+")
+(tao-profiles "data/profiles/([a-zA-Z0-9]|-)+")
+; (tao-themes "/var/www/htdocs/themes/([a-zA-Z0-9]|-)+")
+(tao-themes "data/themes/([a-zA-Z0-9]|-)+")
 
 (socket "khonsu-test-socket")
 

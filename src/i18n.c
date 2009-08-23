@@ -33,8 +33,6 @@
 #include <curie/filesystem.h>
 #include <curie/gc.h>
 
-#define MAX_HEADER_FIELD_LENGTH 4096
-
 define_symbol (sym_accept_language,  "accept-language");
 define_symbol (sym_Vary,             "Vary");
 define_symbol (sym_default_language, "default-language");
@@ -60,14 +58,14 @@ static sexpr get_acceptable_languages (sexpr lq)
     if (!nexp (lq))
     {
         const char *lqs = sx_string (lq);
-        char lqsm [MAX_HEADER_FIELD_LENGTH], semicolon;
+        char lqsm [KHO_MAX_HEADER_FIELD_LENGTH], semicolon;
         sexpr n;
         int i = 0, il = 0;
 
         while (lqs[i] != (char)0)
         {
             lqsm[i] = lqs[i];
-            if (i >= (MAX_HEADER_FIELD_LENGTH - 1)) break;
+            if (i >= (KHO_MAX_HEADER_FIELD_LENGTH - 1)) break;
             i++;
         }
 

@@ -34,8 +34,6 @@
 #include <curie/gc.h>
 #include <curie/signal.h>
 
-#define MAX_HEADER_FIELD_LENGTH 4096
-
 define_symbol (sym_include,          "include");
 define_symbol (sym_base_name,        "base-name");
 define_symbol (sym_extension,        "extension");
@@ -80,14 +78,14 @@ static sexpr get_acceptable_types (sexpr lq)
     if (!nexp (lq))
     {
         const char *lqs = sx_string (lq);
-        char lqsm [MAX_HEADER_FIELD_LENGTH], semicolon;
+        char lqsm [KHO_MAX_HEADER_FIELD_LENGTH], semicolon;
         sexpr n;
         int i = 0, il = 0;
 
         while (lqs[i] != (char)0)
         {
             lqsm[i] = lqs[i];
-            if (i >= (MAX_HEADER_FIELD_LENGTH - 1)) break;
+            if (i >= (KHO_MAX_HEADER_FIELD_LENGTH - 1)) break;
             i++;
         }
 

@@ -7,7 +7,9 @@
   (code "khonsu" "relay" "util")
 
   (headers
-        "khonsu"))
+        "khonsu")
+  (test-cases
+        "path-manipulation"))
 
 (programme "khonsu-backend" libcurie
   (name "Khonsu Server")
@@ -29,7 +31,8 @@
 
   (code "server")
 
-  (data "khonsu" "khonsu.sx" "profiles/xhtml" "themes/default"))
+  (data "khonsu" "khonsu.sx" "profiles/xhtml-1-1" "profiles/html-4-01"
+                 "themes/default"))
 
 (programme "tao" libcurie
   (name "Tao")

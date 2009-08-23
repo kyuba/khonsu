@@ -33,6 +33,9 @@
 extern "C" {
 #endif
 
+#define KHO_MAX_PATH_LENGTH         0x1000
+#define KHO_MAX_HEADER_FIELD_LENGTH 0x1000
+
 #include <curie/sexpr.h>
 
 extern struct sexpr_io *kho_stdio;
@@ -46,6 +49,8 @@ void  kho_configure         (sexpr sx);
 
 sexpr kho_tagmerge          (sexpr arguments, sexpr pre, sexpr post);
 sexpr kho_merge             (sexpr arguments);
+sexpr kho_canonicalise      (sexpr string);
+sexpr kho_normalise         (sexpr string);
 
 void  kho_register_output   (struct sexpr_io *out);
 void  kho_unregister_output (struct sexpr_io *out);

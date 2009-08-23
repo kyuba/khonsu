@@ -59,3 +59,132 @@ sexpr kho_tagmerge (sexpr arguments, sexpr pre, sexpr post)
 {
     return sx_join (pre, kho_merge (arguments), post);
 }
+
+sexpr kho_canonicalise (sexpr string)
+{
+    const char *s = sx_string (string);
+    char st [KHO_MAX_PATH_LENGTH];
+    unsigned int i = 0, j = 0, ld = 0, cc = 0;
+    char t = s[0];
+
+    while ((t != (char)0) && (j < (KHO_MAX_PATH_LENGTH - 1)))
+    {
+        st[j] = t;
+        j++;
+
+        switch (t)
+        {
+            case '.':
+                ld++;
+                break;
+            case '/':
+                if ((cc == 0) && (ld < 3))
+                {
+                    if (ld == 0)
+                    {
+                        j--;
+                    }
+                    else if (ld == 1)
+                    {
+                        j--;
+                        do
+                        {
+                            j--;
+                        }
+                        while ((j > 0) && (st[j] != '/'));
+
+                        if (j > 0)
+                        {
+                            j++;
+                        }
+                    }
+                    else if (ld == 2)
+                    {
+                        j--;
+                        do
+                        {
+                            j--;
+                        }
+                        while ((j > 0) && (st[j] != '/'));
+
+                        if (j > 0)
+                        {
+                            j--;
+                            do
+                            {
+                                j--;
+                            }
+                            while ((j > 0) && (st[j] != '/'));
+
+                            if (j > 0)
+                            {
+                                j++;
+                            }
+                        }
+                    }
+                }
+
+                ld = 0;
+                cc = 0;
+                break;
+            default:
+                cc++;
+        }
+
+        i++;
+        t = s[i];
+    }
+
+    st[j] = 0;
+
+    return make_string (st);
+}
+
+sexpr kho_normalise (sexpr string)
+{
+    sexpr sx      = kho_canonicalise (string);
+    const char *s = sx_string        (sx);
+    char st [KHO_MAX_PATH_LENGTH];
+    char *stp = st;
+    unsigned int i = 0, j = 0;
+    char l = 0, t;
+
+    while ((t = s[i]) != (char)0)
+    {
+        if (((t >= 'a') && (t <= 'z')) ||
+            ((t >= 'A') && (t <= 'Z')) ||
+            ((t >= '0') && (t <= '9')))
+        {
+            st[j] = t;
+            l = (char)0;
+            j++;
+        }
+        else if (l == (char)0)
+        {
+            st[j] = '-';
+            j++;
+            l = (char)1;
+        }
+
+        i++;
+    }
+
+    if (j > 0)
+    {
+        do
+        {
+            j--;
+        }
+        while (st[j] == '-');
+        j++;
+    }
+
+    st[j] = (char)0;
+
+    while ((*stp) == '-')
+    {
+        stp++;
+    }
+
+    return make_string (stp);
+}
