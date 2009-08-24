@@ -31,6 +31,7 @@
 #include <curie/multiplex.h>
 #include <curie/memory.h>
 #include <curie/filesystem.h>
+#include <curie/time.h>
 #include <curie/gc.h>
 
 define_symbol (sym_menu,                       "menu");
@@ -53,6 +54,9 @@ define_symbol (sym_icon,                       "icon");
 define_symbol (sym_short_description,          "short-description");
 define_symbol (sym_sub_section,                "sub-section");
 define_symbol (sym_elaborate,                  "elaborate");
+define_symbol (sym_date,                       "date");
+define_symbol (sym_time,                       "time");
+define_symbol (sym_div,                        "div");
 define_string (str_selected,                   "selected");
 define_string (str_menu,                       "menu");
 define_string (str_slash,                      "/");
@@ -64,6 +68,8 @@ define_string (str_dot,                        ".");
 define_string (str_icon,                       "icon");
 define_string (str_Contact,                    "Contact");
 define_string (str_dot_ksu,                    ".ksu");
+define_string (str_date,                       "date");
+define_string (str_time,                       "time");
 define_string (str_png_icon_no_picture_png,    "png/icon-no-picture.png");
 
 static sexpr webroot          = sx_nonexistent;
@@ -395,6 +401,50 @@ static sexpr request (sexpr arguments, sexpr *env)
     return sx_nonexistent;
 }
 
+static sexpr sx_date (sexpr arguments, sexpr *env)
+{
+    sexpr ta = car (arguments);
+    char s [15];
+    struct date dt;
+
+    dt_split_kin (sx_integer (ta), &dt);
+
+    s[0]  = ((dt.baktun / 10) % 10) + '0';
+    s[1]  =  (dt.baktun % 10)       + '0';
+    s[2]  =                           '.';
+    s[3]  = ((dt.katun / 10) % 10)  + '0';
+    s[4]  =  (dt.katun % 10)        + '0';
+    s[5]  =                           '.';
+    s[6]  = ((dt.tun / 10) % 10)    + '0';
+    s[7]  =  (dt.tun % 10)          + '0';
+    s[8]  =                           '.';
+    s[9]  = ((dt.winal / 10) % 10)  + '0';
+    s[10] =  (dt.winal % 10)        + '0';
+    s[11] =                           '.';
+    s[12] = ((dt.kin / 10) % 10)    + '0';
+    s[13] =  (dt.kin % 10)          + '0';
+    s[14] = 0;
+
+    return cons (sym_div, cons (lx_make_environment (cons (cons (sym_class,
+         str_date), sx_end_of_list)), cons (make_string (s), sx_end_of_list)));
+}
+
+static sexpr sx_time (sexpr arguments, sexpr *env)
+{
+    sexpr ta = car (arguments);
+    char s [5];
+    char ts = (unsigned int)sx_integer (ta) / (unsigned int)100000000;
+
+    s[0] = ((ts / 100) % 10) + '0';
+    s[1] = ((ts / 10)  % 10) + '0';
+    s[2] =  (ts        % 10) + '0';
+    s[3] = '%';
+    s[4] = 0;
+
+    return cons (sym_div, cons (lx_make_environment (cons (cons (sym_class,
+         str_time), sx_end_of_list)), cons (make_string (s), sx_end_of_list)));
+}
+
 int cmain ()
 {
     terminate_on_allocation_errors ();
@@ -409,6 +459,10 @@ int cmain ()
       (kho_environment, sym_contact, lx_foreign_lambda (sym_contact, contact));
     kho_environment = lx_environment_bind
       (kho_environment, sym_request, lx_foreign_lambda (sym_request, request));
+    kho_environment = lx_environment_bind
+      (kho_environment, sym_date, lx_foreign_lambda (sym_date, sx_date));
+    kho_environment = lx_environment_bind
+      (kho_environment, sym_time, lx_foreign_lambda (sym_time, sx_time));
 
     while (multiplex () != mx_nothing_to_do)
     {

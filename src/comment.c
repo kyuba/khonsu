@@ -47,6 +47,8 @@ define_symbol (sym_name,             "name");
 define_symbol (sym_div,              "div");
 define_symbol (sym_comment_added,    "comment-added");
 define_symbol (sym_base_name,        "base-name");
+define_symbol (sym_date,             "date");
+define_symbol (sym_time,             "time");
 define_string (str_dot,              ".");
 define_string (str_dot_ksu,          ".ksu");
 define_string (str_post,             "post");
@@ -72,14 +74,23 @@ static void configure_callback (sexpr sx)
 
 static sexpr comment (sexpr args, sexpr *env)
 {
-    sexpr name = car (args);
+    sexpr name = car (args), tt, td;
+
+    args = cdr (args);
+
+    td = car (args);
+
+    args = cdr (args);
+
+    tt = car (args);
 
     args = cdr (args);
 
     return cons (sym_wrap, cons (lx_make_environment (cons (cons (sym_class,
          str_comment), sx_end_of_list)), cons (cons (sym_sub_sub_section,
-         cons (sx_join (str_comment_by_s, name, str_nil), args)),
-         sx_end_of_list)));
+         cons (sx_join (str_comment_by_s, name, str_nil), cons (cons (sym_date,
+         cons (td, sx_end_of_list)), cons (cons (sym_time, cons (tt,
+         sx_end_of_list)), args)))), sx_end_of_list)));
 }
 
 static sexpr previous_comments (sexpr base, sexpr env)

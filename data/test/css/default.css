@@ -203,3 +203,17 @@ div.comment h4
     color: #bbbbbb;
     font-size: 1em;
 }
+
+div.comment div.date
+{
+    text-align: right;
+    color: #bbbbbb;
+    font-size: 0.8em;
+}
+
+div.comment div.time
+{
+    text-align: right;
+    color: #bbbbbb;
+    font-size: 0.8em;
+}
