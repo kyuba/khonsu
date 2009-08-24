@@ -84,6 +84,16 @@
 
   (code "project"))
 
+(programme "comment" libcurie
+  (name "Khonsu Comments")
+  (description "Allows adding comments to served pages")
+  (version "1")
+  (url "http://kyuba.org/")
+
+  (libraries "khonsu" "seteh")
+
+  (code "comment"))
+
 (programme "khonsu-cgi" libcurie
   (name "Khonsu CGI")
   (description "CGI Interface for Khonsu")

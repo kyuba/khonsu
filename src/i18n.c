@@ -178,8 +178,6 @@ int cmain ()
     kho_environment = lx_environment_bind
       (kho_environment, sym_request, lx_foreign_lambda (sym_request, request));
 
-    kho_debug (make_symbol ("i18n"));
-
     while (multiplex () != mx_nothing_to_do)
     {
 //        gc_invoke();

@@ -60,8 +60,6 @@ int cmain ()
     initialise_khonsu ();
     multiplex_network ();
 
-    kho_debug (make_symbol ("khonsu-server"));
-
     while (multiplex () != mx_nothing_to_do)
     {
 //        gc_invoke();

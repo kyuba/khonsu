@@ -361,8 +361,6 @@ int cmain ()
             (kho_environment, sym_include,
              lx_foreign_lambda (sym_include, include));
 
-    kho_debug (make_symbol ("khonsu-backend"));
-
     while (multiplex () != mx_nothing_to_do)
     {
 //        gc_invoke();
