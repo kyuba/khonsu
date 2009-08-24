@@ -187,3 +187,19 @@ a.icon em
     font-weight: bold;
     margin-top: 3px;
 }
+
+div.comment
+{
+    background: #eeeeee;
+    border: 1px solid #dddddd;
+    padding: 3px;
+    font-style: italic;
+}
+
+div.comment h4
+{
+    text-align: right;
+    margin-top: 0px;
+    color: #bbbbbb;
+    font-size: 1em;
+}

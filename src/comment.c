@@ -34,17 +34,26 @@
 #include <curie/gc.h>
 
 define_symbol (sym_document,         "document");
+define_symbol (sym_comment,          "comment");
+define_symbol (sym_class,            "class");
 define_symbol (sym_method,           "method");
 define_symbol (sym_action,           "action");
 define_symbol (sym_extension,        "extension");
 define_symbol (sym_sub_section,      "sub-section");
+define_symbol (sym_sub_sub_section,  "sub-sub-section");
+define_symbol (sym_wrap,             "wrap");
 define_symbol (sym_form,             "form");
+define_symbol (sym_name,             "name");
 define_symbol (sym_div,              "div");
 define_symbol (sym_comment_added,    "comment-added");
 define_symbol (sym_base_name,        "base-name");
 define_string (str_dot,              ".");
+define_string (str_dot_ksu,          ".ksu");
 define_string (str_post,             "post");
+define_string (str_put,              "put");
 define_string (str_comment,          "comment");
+define_string (str_comment_by_s,     "Comment by ");
+define_string (str_scomments,        "/comment/");
 define_string (str_Comments,         "Comments");
 define_string (str_text_html,        "text/html");
 define_string (str_text_xhtml,       "application/xhtml+xml");
@@ -61,14 +70,54 @@ static void configure_callback (sexpr sx)
     }
 }
 
-static sexpr previous_comments (sexpr base)
+static sexpr comment (sexpr args, sexpr *env)
 {
-    return cons (sym_sub_section, cons (str_Comments, sx_end_of_list));
+    sexpr name = car (args);
+
+    args = cdr (args);
+
+    return cons (sym_wrap, cons (lx_make_environment (cons (cons (sym_class,
+         str_comment), sx_end_of_list)), cons (cons (sym_sub_sub_section,
+         cons (sx_join (str_comment_by_s, name, str_nil), args)),
+         sx_end_of_list)));
+}
+
+static sexpr previous_comments (sexpr base, sexpr env)
+{
+    sexpr r = sx_end_of_list,
+          t = sx_join
+            (webroot, str_scomments,
+             sx_join (kho_normalise(lx_environment_lookup (env, sym_base_name)),
+                      str_dot_ksu, str_nil));
+
+    if (truep (filep (t)))
+    {
+        struct sexpr_io *in = sx_open_io (io_open_read (sx_string (t)),
+                                          io_open_null);
+        sexpr n;
+
+        while (!eofp (n = sx_read (in)))
+        {
+            if (!nexp (n))
+            {
+                r = cons (lx_eval (n, &env), r);
+            }
+        }
+    }
+
+    if (eolp (r))
+    {
+        return sx_end_of_list;
+    }
+    else
+    {
+        return cons (sym_sub_section, cons (str_Comments, r));
+    }
 }
 
 static sexpr make_comment_box (sexpr ext)
 {
-    return cons (sym_form, cons (lx_make_environment (cons (cons (sym_id, str_comment), cons (cons (sym_action, (nexp (ext) ? str_comment : sx_join (str_comment, str_dot, ext))), cons (cons (sym_method, str_post), sx_end_of_list)))), sx_end_of_list));
+    return cons (sym_form, cons (lx_make_environment (cons (cons (sym_id, str_comment), cons (cons (sym_action, (nexp (ext) ? str_comment : sx_join (str_comment, str_dot, ext))), cons (cons (sym_method, str_put), sx_end_of_list)))), sx_end_of_list));
 }
 
 static sexpr document (sexpr args, sexpr *env)
@@ -95,15 +144,14 @@ static sexpr document (sexpr args, sexpr *env)
 
     if (truep (equalp (e, str_text_xhtml)) || truep (equalp (e, str_text_html)))
     {
-        args = cons (previous_comments
-           (lx_environment_lookup (*env, sym_base_name)),
-           cons (make_comment_box (lx_environment_lookup (*env, sym_extension)),
-                 args));
+        args = cons (make_comment_box (lx_environment_lookup (*env,
+            sym_extension)), cons (previous_comments (lx_environment_lookup
+            (*env, sym_base_name), *env), args));
     }
     else
     {
         args = cons (previous_comments
-          (lx_environment_lookup (*env, sym_base_name)), args);
+          (lx_environment_lookup (*env, sym_base_name), *env), args);
     }
 
     en = lx_environment_bind (en, sym_comment_added, sx_true);
@@ -121,6 +169,8 @@ int cmain ()
 
     kho_environment = lx_environment_bind
       (kho_environment,sym_document,lx_foreign_lambda (sym_document,document));
+    kho_environment = lx_environment_bind
+      (kho_environment, sym_comment, lx_foreign_lambda (sym_comment, comment));
 
     while (multiplex () != mx_nothing_to_do)
     {
