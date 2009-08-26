@@ -63,6 +63,7 @@ define_string (str_slash,                      "/");
 define_string (str_scontacts,                  "/contact/");
 define_string (str_contact_dash,               "contact-");
 define_string (str_contact_slash,              "contact/");
+define_string (str_comma_space,                ", ");
 define_string (str_space,                      " ");
 define_string (str_dot,                        ".");
 define_string (str_icon,                       "icon");
@@ -71,6 +72,94 @@ define_string (str_dot_ksu,                    ".ksu");
 define_string (str_date,                       "date");
 define_string (str_time,                       "time");
 define_string (str_png_icon_no_picture_png,    "png/icon-no-picture.png");
+
+define_string (str_imix,     "Imix'");
+define_string (str_ik,       "Ik'");
+define_string (str_akbal,    "Ak'b'al");
+define_string (str_kan,      "K'an");
+define_string (str_chikchan, "Chikchan");
+define_string (str_kimit,    "Kimi");
+define_string (str_manik,    "Manik'");
+define_string (str_lamat,    "Lamat");
+define_string (str_muluk,    "Muluk");
+define_string (str_ok,       "Ok");
+define_string (str_chuwen,   "Chuwen");
+define_string (str_eb,       "Eb'");
+define_string (str_ben,      "B'en");
+define_string (str_ix,       "Ix");
+define_string (str_men,      "Men");
+define_string (str_kib,      "K'ib'");
+define_string (str_kaban,    "Kab'an");
+define_string (str_etznab,   "Etz'nab'");
+define_string (str_kawak,    "Kawak");
+define_string (str_ajaw,     "Ajaw");
+
+define_string (str_pop,      "Pop");
+define_string (str_wo,       "Wo");
+define_string (str_sip,      "Sip");
+define_string (str_sotz,     "Sotz'");
+define_string (str_sek,      "Sek");
+define_string (str_xul,      "Xul");
+define_string (str_yaxkin,   "Yaxk'in");
+define_string (str_mol,      "Mol");
+define_string (str_chen,     "Ch'en");
+define_string (str_yax,      "Yax");
+define_string (str_sac,      "Sac");
+define_string (str_keh,      "Keh");
+define_string (str_mak,      "Mak");
+define_string (str_kankin,   "K'ank'in");
+define_string (str_muwan,    "Muwan");
+define_string (str_pax,      "Pax");
+define_string (str_kayab,    "K'ayab'");
+define_string (str_kumku,    "Kumk'u");
+define_string (str_wayeb,    "Wayeb'");
+
+static const sexpr tzolkin_day_names [20] =
+{
+    ((const sexpr)&(sexpr_payload_str_ajaw)),
+    ((const sexpr)&(sexpr_payload_str_imix)),
+    ((const sexpr)&(sexpr_payload_str_ik)),
+    ((const sexpr)&(sexpr_payload_str_akbal)),
+    ((const sexpr)&(sexpr_payload_str_kan)),
+    ((const sexpr)&(sexpr_payload_str_chikchan)),
+    ((const sexpr)&(sexpr_payload_str_kimit)),
+    ((const sexpr)&(sexpr_payload_str_manik)),
+    ((const sexpr)&(sexpr_payload_str_lamat)),
+    ((const sexpr)&(sexpr_payload_str_muluk)),
+    ((const sexpr)&(sexpr_payload_str_ok)),
+    ((const sexpr)&(sexpr_payload_str_chuwen)),
+    ((const sexpr)&(sexpr_payload_str_eb)),
+    ((const sexpr)&(sexpr_payload_str_ben)),
+    ((const sexpr)&(sexpr_payload_str_ix)),
+    ((const sexpr)&(sexpr_payload_str_men)),
+    ((const sexpr)&(sexpr_payload_str_kib)),
+    ((const sexpr)&(sexpr_payload_str_kaban)),
+    ((const sexpr)&(sexpr_payload_str_etznab)),
+    ((const sexpr)&(sexpr_payload_str_kawak))
+};
+
+static const sexpr haab_day_names [19] =
+{
+    ((const sexpr)&(sexpr_payload_str_pop)),
+    ((const sexpr)&(sexpr_payload_str_wo)),
+    ((const sexpr)&(sexpr_payload_str_sip)),
+    ((const sexpr)&(sexpr_payload_str_sotz)),
+    ((const sexpr)&(sexpr_payload_str_sek)),
+    ((const sexpr)&(sexpr_payload_str_xul)),
+    ((const sexpr)&(sexpr_payload_str_yaxkin)),
+    ((const sexpr)&(sexpr_payload_str_mol)),
+    ((const sexpr)&(sexpr_payload_str_chen)),
+    ((const sexpr)&(sexpr_payload_str_yax)),
+    ((const sexpr)&(sexpr_payload_str_sac)),
+    ((const sexpr)&(sexpr_payload_str_keh)),
+    ((const sexpr)&(sexpr_payload_str_mak)),
+    ((const sexpr)&(sexpr_payload_str_kankin)),
+    ((const sexpr)&(sexpr_payload_str_muwan)),
+    ((const sexpr)&(sexpr_payload_str_pax)),
+    ((const sexpr)&(sexpr_payload_str_kayab)),
+    ((const sexpr)&(sexpr_payload_str_kumku)),
+    ((const sexpr)&(sexpr_payload_str_wayeb))
+};
 
 static sexpr webroot          = sx_nonexistent;
 
@@ -404,36 +493,67 @@ static sexpr request (sexpr arguments, sexpr *env)
 static sexpr sx_date (sexpr arguments, sexpr *env)
 {
     sexpr ta = car (arguments);
-    char s [15];
+    char s [15], *se;
     struct date dt;
+    sexpr ts;
+    int i, j;
+    int_time it = sx_integer (ta);
 
-    dt_split_kin (sx_integer (ta), &dt);
+    dt_split_kin (it, &dt);
 
     s[0]  = ((dt.baktun / 10) % 10) + '0';
-    s[1]  =  (dt.baktun % 10)       + '0';
+    s[1]  =  (dt.baktun       % 10) + '0';
     s[2]  =                           '.';
-    s[3]  = ((dt.katun / 10) % 10)  + '0';
-    s[4]  =  (dt.katun % 10)        + '0';
+    s[3]  = ((dt.katun  / 10) % 10) + '0';
+    s[4]  =  (dt.katun        % 10) + '0';
     s[5]  =                           '.';
-    s[6]  = ((dt.tun / 10) % 10)    + '0';
-    s[7]  =  (dt.tun % 10)          + '0';
+    s[6]  = ((dt.tun    / 10) % 10) + '0';
+    s[7]  =  (dt.tun          % 10) + '0';
     s[8]  =                           '.';
-    s[9]  = ((dt.winal / 10) % 10)  + '0';
-    s[10] =  (dt.winal % 10)        + '0';
+    s[9]  = ((dt.winal  / 10) % 10) + '0';
+    s[10] =  (dt.winal        % 10) + '0';
     s[11] =                           '.';
-    s[12] = ((dt.kin / 10) % 10)    + '0';
-    s[13] =  (dt.kin % 10)          + '0';
+    s[12] = ((dt.kin    / 10) % 10) + '0';
+    s[13] =  (dt.kin          % 10) + '0';
     s[14] = 0;
 
+    ts = make_string (s);
+
+    i = (it + 4) % 13;
+
+    s[0] = ((i / 10) % 10) + '0';
+    s[1] =  (i       % 10) + '0';
+    s[2] = 0;
+
+    se = (s[0] == '0') ? (s + 1) : s;
+
+    ts = sx_join (ts, str_comma_space,
+                  sx_join (make_string (se), str_space,
+                           tzolkin_day_names[(it % 20)]));
+
+    i = (it - 17) % 365;
+
+    j = (i % 20);
+
+    s[0] = ((j / 10) % 10) + '0';
+    s[1] =  (j       % 10) + '0';
+    s[2] = 0;
+
+    se = (s[0] == '0') ? (s + 1) : s;
+
+    ts = sx_join (ts, str_comma_space,
+                  sx_join (make_string (se), str_space,
+                           haab_day_names[(i / 20)]));
+
     return cons (sym_div, cons (lx_make_environment (cons (cons (sym_class,
-         str_date), sx_end_of_list)), cons (make_string (s), sx_end_of_list)));
+         str_date), sx_end_of_list)), cons (ts, sx_end_of_list)));
 }
 
 static sexpr sx_time (sexpr arguments, sexpr *env)
 {
     sexpr ta = car (arguments);
-    char s [5];
-    char ts = (unsigned int)sx_integer (ta) / (unsigned int)100000000;
+    char s [5], *se;
+    char ts = (unsigned int)sx_integer (ta) / (unsigned int)1000000;
 
     s[0] = ((ts / 100) % 10) + '0';
     s[1] = ((ts / 10)  % 10) + '0';
@@ -441,8 +561,11 @@ static sexpr sx_time (sexpr arguments, sexpr *env)
     s[3] = '%';
     s[4] = 0;
 
+    se = (s[0]  == '0') ? (s  + 1) : s;
+    se = (se[0] == '0') ? (se + 1) : se;
+
     return cons (sym_div, cons (lx_make_environment (cons (cons (sym_class,
-         str_time), sx_end_of_list)), cons (make_string (s), sx_end_of_list)));
+         str_time), sx_end_of_list)), cons (make_string (se), sx_end_of_list)));
 }
 
 int cmain ()
