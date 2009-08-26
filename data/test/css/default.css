@@ -192,28 +192,46 @@ div.comment
 {
     background: #eeeeee;
     border: 1px solid #dddddd;
-    padding: 3px;
+    padding: 5px;
     font-style: italic;
+    margin: 5px;
 }
 
 div.comment h4
 {
+    float: right;
     text-align: right;
-    margin-top: 0px;
+    margin: 0px;
     color: #bbbbbb;
     font-size: 1em;
 }
 
 div.comment div.date
 {
-    text-align: right;
+    float: left;
     color: #bbbbbb;
     font-size: 0.8em;
+    padding: 0px 5px;
 }
 
 div.comment div.time
 {
-    text-align: right;
+    float: left;
     color: #bbbbbb;
     font-size: 0.8em;
+    padding: 0px 5px;
+    border-left: 1px solid #bbbbbb;
+}
+
+div.comment p
+{
+    clear: both;
+    border-top: 1px solid #bbbbbb;
+}
+
+div.comment p:first-letter
+{
+    float: none;
+    font-size: 1em;
+    font-weight: normal;
 }

@@ -116,14 +116,7 @@ static sexpr previous_comments (sexpr base, sexpr env)
         }
     }
 
-    if (eolp (r))
-    {
-        return sx_end_of_list;
-    }
-    else
-    {
-        return cons (sym_sub_section, cons (str_Comments, r));
-    }
+    return cons (sym_sub_section, cons (str_Comments, r));
 }
 
 static sexpr make_comment_box (sexpr ext)
