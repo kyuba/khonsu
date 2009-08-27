@@ -34,6 +34,12 @@
 #include <curie/regex.h>
 #include <curie/gc.h>
 
+struct transdata
+{
+    int done;
+    struct transformation **t;
+};
+
 define_symbol (sym_tao_map_extension,        "tao:map-extension");
 define_symbol (sym_tao_transform,            "tao:transform");
 define_symbol (sym_tao_match,                "tao:match");
@@ -112,33 +118,49 @@ static void tao_add_transformation (struct transformation **t, sexpr sx)
     *t = tr;
 }
 
+static void ccw_on_read (sexpr sx, struct sexpr_io *io, void *aux)
+{
+    struct transdata *td = (struct transdata *)aux;
+
+    if (eofp (sx))
+    {
+        td->done = 1;
+    }
+    else if (consp (sx))
+    {
+        sexpr da = car (sx);
+
+        if (truep (equalp (da, sym_tao_map_extension)))
+        {
+            kho_configure (cons (sym_map_extension, cdr (sx)));
+        }
+        else if (truep (equalp (da, sym_tao_transform)))
+        {
+            tao_add_transformation (td->t, cdr (sx));
+        }
+    }
+}
+
 static void configure_callback_work (struct transformation **t, sexpr sx)
 {
-    sexpr b = read_directory_sx (sx), d, da;
+    sexpr b = read_directory_sx (sx), d;
     struct sexpr_io *i;
+    struct transdata td = { 0, t };
 
     while (consp (b))
     {
-        i = sx_open_io (io_open_read(sx_string (car (b))), io_open_null);
+        d = car (b);
+        i = sx_open_io (io_open_read(sx_string (d)), io_open_null);
 
-        while (!eofp (d = sx_read (i)))
+        multiplex_add_sexpr (i, ccw_on_read, &td);
+
+        do
         {
-            if (consp (d))
-            {
-                da = car (d);
-
-                if (truep (equalp (da, sym_tao_map_extension)))
-                {
-                    kho_configure (cons (sym_map_extension, cdr (d)));
-                }
-                else if (truep (equalp (da, sym_tao_transform)))
-                {
-                    tao_add_transformation (t, cdr (d));
-                }
-            }
+            if (multiplex () == mx_nothing_to_do) break;
         }
+        while (td.done == 0);
 
-        sx_close_io (i);
+        td.done = 0;
 
         b = cdr (b);
     }

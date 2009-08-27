@@ -34,6 +34,13 @@
 #include <curie/time.h>
 #include <curie/gc.h>
 
+struct transdata
+{
+    sexpr environment;
+    sexpr *data;
+    int done;
+};
+
 define_symbol (sym_menu,                       "menu");
 define_symbol (sym_list,                       "list");
 define_symbol (sym_link,                       "link");
@@ -173,32 +180,46 @@ static void configure_callback (sexpr sx)
     }
 }
 
+static void include_on_read (sexpr sx, struct sexpr_io *io, void *aux)
+{
+    struct transdata *td = (struct transdata *)aux;
+
+    if (eofp (sx))
+    {
+        td->done = 1;
+    }
+    else if (consp (sx))
+    {
+        sexpr n = car (sx);
+
+        if (truep (equalp (sym_object, n)))
+        {
+            (*(td->data)) =
+                    cons (lx_eval (sx, &(td->environment)), (*(td->data)));
+        }
+        else
+        {
+            (*(td->data)) = cons (sx, (*(td->data)));
+        }
+    }
+}
+
 static sexpr include_file (sexpr fn, sexpr env)
 {
     struct sexpr_io *io = sx_open_io (io_open_read (sx_string (fn)),
                                       io_open_null);
-    sexpr data = sx_end_of_list, n, r,
-          tje = lx_environment_join (kho_environment, env);
+    sexpr data = sx_end_of_list;
 
-    while (!eofp (r = sx_read (io)))
+    struct transdata td =
+          { lx_environment_join (kho_environment, env), &data, 0 };
+
+    multiplex_add_sexpr (io, include_on_read, &td);
+
+    do
     {
-        if (!nexp (r))
-        {
-            n = car (r);
-            if (truep (equalp (sym_object, n)))
-            {
-                tje = lx_environment_join
-                        (kho_environment, env);
-                data = cons (lx_eval (r, &tje), data);
-            }
-            else
-            {
-                data = cons (r, data);
-            }
-        }
+        multiplex ();
     }
-
-    sx_close_io (io);
+    while (td.done == 0);
 
     return sx_reverse (data);
 }

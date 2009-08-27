@@ -34,6 +34,13 @@
 #include <curie/gc.h>
 #include <curie/signal.h>
 
+struct transdata
+{
+    sexpr environment;
+    sexpr *data;
+    int done;
+};
+
 define_symbol (sym_include,          "include");
 define_symbol (sym_base_name,        "base-name");
 define_symbol (sym_extension,        "extension");
@@ -161,11 +168,35 @@ static sexpr get_acceptable_type (sexpr lq)
     return default_type;
 }
 
+static void include_on_read (sexpr sx, struct sexpr_io *io, void *aux)
+{
+    struct transdata *td = (struct transdata *)aux;
+
+    if (eofp (sx))
+    {
+        td->done = 1;
+    }
+    else if (consp (sx))
+    {
+        sexpr n = car (sx);
+
+        if (truep (equalp (sym_object, n)))
+        {
+            (*(td->data)) =
+                    cons (lx_eval (sx, &(td->environment)), (*(td->data)));
+        }
+        else
+        {
+            (*(td->data)) = cons (sx, (*(td->data)));
+        }
+    }
+}
+
 static sexpr include (sexpr arguments, sexpr *env)
 {
     define_string (str_slash, "/");
     sexpr e = *env, to = car (arguments), t = sx_join (webroot, str_slash, to),
-          data = sx_end_of_list, r, tje, lang, lcodes, te, tf,
+          data = sx_end_of_list, lang, lcodes, te, tf,
           type = sx_nonexistent, lcc;
     struct sexpr_io *io;
     int len = 0, i = 0;
@@ -269,31 +300,22 @@ static sexpr include (sexpr arguments, sexpr *env)
 
                 if (!nexp (tf))
                 {
+                    struct transdata td =
+                        { lx_environment_join (lx_environment_join
+                                (kho_environment, *env), e), &data, 0 };
+
                     e = lx_environment_bind (e, sym_format, tf);
 
                     io = sx_open_io (io_open_read (sx_string (t)),
-                                        io_open_null);
+                                     io_open_null);
 
-                    while (!eofp (r = sx_read (io)))
+                    multiplex_add_sexpr (io, include_on_read, &td);
+
+                    do
                     {
-                        if (!nexp (r))
-                        {
-                            sexpr n = car (r);
-                            if (truep (equalp (sym_object, n)))
-                            {
-                                tje = lx_environment_join
-                                        (kho_environment, *env);
-                                tje = lx_environment_join (tje, e);
-                                data = cons (lx_eval (r, &tje), data);
-                            }
-                            else
-                            {
-                                data = cons (r, data);
-                            }
-                        }
+                        multiplex ();
                     }
-
-                    sx_close_io (io);
+                    while (td.done == 0);
 
                     return cons (e, sx_reverse (data));
                 }

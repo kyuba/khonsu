@@ -223,6 +223,13 @@ static sexpr configure (sexpr arguments, sexpr *env)
     return sx_nonexistent;
 }
 
+static void ik_on_read (sexpr sx, struct sexpr_io *io, void *aux)
+{
+    sexpr *d = (sexpr *)aux;
+
+    (*d) = cons (sx, (*d));
+}
+
 void initialise_khonsu ()
 {
     static char initialised = 0;
@@ -263,15 +270,19 @@ void initialise_khonsu ()
         {
             struct sexpr_io * i = sx_open_io (io_open_read (curie_argv[1]),
                                               io_open_null);
-            sexpr r, c = sx_end_of_list;
+            sexpr c = sx_end_of_list, d;
 
-            while (!eofp (r = sx_read (i)))
+            multiplex_add_sexpr (i, ik_on_read, &c);
+
+            do
             {
-                if (!nexp (r))
-                {
-                    c = cons (r, c);
-                }
+                multiplex ();
+
+                d = car (c);
             }
+            while (!eofp (d));
+
+            c = cdr (c);
 
             relay_spawn (c);
         }

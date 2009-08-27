@@ -33,6 +33,13 @@
 #include <curie/filesystem.h>
 #include <curie/gc.h>
 
+struct transdata
+{
+    sexpr environment;
+    sexpr *data;
+    int done;
+};
+
 define_symbol (sym_document,         "document");
 define_symbol (sym_comment,          "comment");
 define_symbol (sym_class,            "class");
@@ -93,6 +100,30 @@ static sexpr comment (sexpr args, sexpr *env)
          sx_end_of_list)), args)))), sx_end_of_list)));
 }
 
+static void include_on_read (sexpr sx, struct sexpr_io *io, void *aux)
+{
+    struct transdata *td = (struct transdata *)aux;
+
+    if (eofp (sx))
+    {
+        td->done = 1;
+    }
+    else if (consp (sx))
+    {
+        sexpr n = car (sx);
+
+        if (truep (equalp (sym_object, n)))
+        {
+            (*(td->data)) =
+                    cons (lx_eval (sx, &(td->environment)), (*(td->data)));
+        }
+        else
+        {
+            (*(td->data)) = cons (sx, (*(td->data)));
+        }
+    }
+}
+
 static sexpr previous_comments (sexpr base, sexpr env)
 {
     sexpr r = sx_end_of_list,
@@ -103,17 +134,16 @@ static sexpr previous_comments (sexpr base, sexpr env)
 
     if (truep (filep (t)))
     {
+        struct transdata td = { env, &r, 0 };
         struct sexpr_io *in = sx_open_io (io_open_read (sx_string (t)),
                                           io_open_null);
-        sexpr n;
+        multiplex_add_sexpr (in, include_on_read, &td);
 
-        while (!eofp (n = sx_read (in)))
+        do
         {
-            if (!nexp (n))
-            {
-                r = cons (lx_eval (n, &env), r);
-            }
+            multiplex ();
         }
+        while (td.done == 0);
     }
 
     return cons (sym_sub_section, cons (str_Comments, r));
