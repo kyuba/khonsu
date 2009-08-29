@@ -64,6 +64,15 @@ define_symbol (sym_elaborate,                  "elaborate");
 define_symbol (sym_date,                       "date");
 define_symbol (sym_time,                       "time");
 define_symbol (sym_div,                        "div");
+define_symbol (sym_table,                      "table");
+define_symbol (sym_tbody,                      "tbody");
+define_symbol (sym_tr,                         "tr");
+define_symbol (sym_td,                         "td");
+define_symbol (sym_th,                         "th");
+define_symbol (sym_trContactName,              "tr:ContactName");
+define_symbol (sym_trDescription,              "tr:Description");
+define_symbol (sym_trIcon,                     "tr:Icon");
+
 define_string (str_selected,                   "selected");
 define_string (str_menu,                       "menu");
 define_string (str_slash,                      "/");
@@ -79,6 +88,8 @@ define_string (str_dot_ksu,                    ".ksu");
 define_string (str_date,                       "date");
 define_string (str_time,                       "time");
 define_string (str_png_icon_no_picture_png,    "png/icon-no-picture.png");
+define_string (str_text_html,                  "text/html");
+define_string (str_text_xhtml,                 "application/xhtml+xml");
 
 define_string (str_imix,     "Imix'");
 define_string (str_ik,       "Ik'");
@@ -361,11 +372,16 @@ static sexpr include_contact (sexpr file, sexpr env)
 static sexpr contact_elaborate (sexpr args, sexpr *env)
 {
     sexpr a = car (args);
-    args    = cdr (args);
-
     sexpr t, v, icon = str_png_icon_no_picture_png,
           fn = sx_nonexistent, ln = sx_nonexistent, sdesc = sx_nonexistent,
-          te;
+          te, ae = lx_environment_lookup (*env, sym_format);
+    args = cdr (args);
+
+    if (!truep (equalp (ae, str_text_xhtml)) &&
+        !truep (equalp (ae, str_text_html)))
+    {
+        return sx_nonexistent;
+    }
 
     while (consp (args))
     {
@@ -395,11 +411,25 @@ static sexpr contact_elaborate (sexpr args, sexpr *env)
 
     te = lx_environment_join (kho_environment, *env);
 
-    return lx_eval (cons (sym_object, cons (cons (sym_document,
-        cons (str_Contact, cons (cons (sym_menu, sx_end_of_list),
-        cons(sx_join (fn, str_space, ln), cons (sdesc, cons (cons
-        (sym_image, cons (icon, sx_end_of_list)), sx_end_of_list)))))),
-        sx_end_of_list)), &te);
+/*    cons (sym_tr, cons (sx_join (fn, str_space, ln), cons (sdesc, cons (cons
+           (sym_image, cons (icon, sx_end_of_list)), sx_end_of_list)))),*/
+
+    return lx_eval (cons (sym_object, cons (cons (sym_document, cons
+        (str_Contact, cons (cons (sym_menu, sx_end_of_list), cons(cons
+        (sym_table, cons (cons (sym_tbody,
+     cons (
+        cons (sym_tr, cons (cons (sym_th, cons (sym_trContactName,
+              sx_end_of_list)), cons (cons (sym_td, cons (sx_join (fn,
+              str_space, ln), sx_end_of_list)), sx_end_of_list))),
+        cons (cons (sym_tr, cons (cons (sym_th, cons (sym_trDescription,
+              sx_end_of_list)), cons (cons (sym_td, cons (sdesc,
+              sx_end_of_list)), sx_end_of_list))),
+        cons (cons (sym_tr, cons (cons (sym_th, cons (sym_trIcon,
+              sx_end_of_list)), cons (cons (sym_td, cons (cons(sym_image, cons
+              (icon, sx_end_of_list)), sx_end_of_list)), sx_end_of_list))),
+        sx_end_of_list)))),
+        sx_end_of_list)), sx_end_of_list)))), sx_end_of_list)),
+     &te);
 }
 
 static sexpr contact (sexpr args, sexpr *env)

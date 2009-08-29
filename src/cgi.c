@@ -54,7 +54,7 @@ define_string (str_error_transcript_not_possible_xhtml,
 define_string (str_text_plain,          "text/plain");
 
 #define KHONSU_SOCKET_ENVIRONMENT        "KHONSU_SOCKET="
-#define SCRIPT_NAME_ENVIRONMENT          "PATH_INFO=/"
+#define SCRIPT_NAME_ENVIRONMENT          "PATH_INFO="
 #define HTTP_ACCEPT_ENVIRONMENT          "HTTP_ACCEPT="
 #define HTTP_ACCEPT_LANGUAGE_ENVIRONMENT "HTTP_ACCEPT_LANGUAGE="
 #define HTTP_USER_AGENT_ENVIRONMENT      "HTTP_USER_AGENT="
@@ -147,7 +147,7 @@ static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
             const char *output = (const char *)0;
             sexpr sxoutput = str_nil;
             sexpr env      = lx_make_environment (sx_end_of_list);
-            sexpr mime     = str_text_plain;
+            sexpr mime     = sx_nonexistent;
             sexpr verbatim = sx_nonexistent;
             sexpr t, ta, tb;
 
@@ -189,11 +189,17 @@ static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
             else
             {
                 unsigned int n, ml;
-                const char *m = sx_string (mime);
+                const char *m;
                 const char *e1, *e2;
 
-                for (ml = 0; m[ml] != (char)0;     ml++);
-                for (n = 0;  output[n] != (char)0; n++);
+                if (!nexp (mime))
+                {
+                    m = sx_string (mime);
+
+                    for (ml = 0; m[ml] != (char)0;     ml++);
+                }
+
+                for (n = 0; output[n] != (char)0; n++);
 
                 io_collect (out, HTTP_STATUS, (sizeof (HTTP_STATUS) -1));
 
@@ -216,10 +222,13 @@ static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
                 }
                 io_collect (out, "\r\n", 2);
 
-                io_collect (out, HTTP_CONTENT_TYPE,
-                            (sizeof (HTTP_CONTENT_TYPE) -1));
-                io_collect (out, m, ml);
-                io_collect (out, "\r\n", 2);
+                if (!nexp (mime))
+                {
+                    io_collect (out, HTTP_CONTENT_TYPE,
+                                (sizeof (HTTP_CONTENT_TYPE) -1));
+                    io_collect (out, m, ml);
+                    io_collect (out, "\r\n", 2);
+                }
 
                 if (!nexp (verbatim))
                 {

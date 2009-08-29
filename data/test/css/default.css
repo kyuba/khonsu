@@ -1,5 +1,5 @@
 html, head, body, ul, ol, li, p, h1, h2, h3, h4, h5, h6, table, tr, td, tbody,
-thead, th, em, strong, a
+thead, th, em, strong, a, label, input, textarea
 {
     padding: 0px;
     margin: 0px;
@@ -9,6 +9,8 @@ body
 {
     font-family: sans-serif;
     padding: 5px 250px 5px 25px;
+    background: white;
+    color: black;
 }
 
 p:first-letter
@@ -202,14 +204,13 @@ div.comment h4
     float: right;
     text-align: right;
     margin: 0px;
-    color: #bbbbbb;
     font-size: 1em;
+    font-weight: normal;
 }
 
 div.comment div.date
 {
     float: left;
-    color: #bbbbbb;
     font-size: 0.8em;
     padding: 0px 5px;
 }
@@ -217,16 +218,14 @@ div.comment div.date
 div.comment div.time
 {
     float: left;
-    color: #bbbbbb;
     font-size: 0.8em;
     padding: 0px 5px;
-    border-left: 1px solid #bbbbbb;
 }
 
 div.comment p
 {
     clear: both;
-    border-top: 1px solid #bbbbbb;
+    border-top: 1px solid black;
 }
 
 div.comment p:first-letter
@@ -234,4 +233,77 @@ div.comment p:first-letter
     float: none;
     font-size: 1em;
     font-weight: normal;
+}
+
+form#comment label
+{
+    display: block;
+    clear: both;
+    float: left;
+}
+
+form#comment fieldset
+{
+    border: 0px;
+    border-top: 2px solid #999999;
+    margin: 0px 2px 2px 2px;
+    overflow: hidden;
+    height: 0.3em;
+    width: 8em;
+}
+
+form#comment fieldset:hover
+{
+    border: 1px solid #999999;
+    margin: 1px;
+    overflow: auto;
+    height: auto;
+    width: auto;
+}
+
+form#comment fieldset *
+{
+    visibility: hidden;
+}
+
+form#comment fieldset legend, form#comment fieldset:hover *
+{
+    visibility: visible;
+}
+
+form#comment fieldset legend
+{
+    cursor: default;
+}
+
+form#comment input, form#comment textarea
+{
+    display: block;
+    float: right;
+    width: 80%;
+    border: 1px solid #999999;
+    margin: 1px;
+    cursor: text;
+    background: white;
+    color: black;
+}
+
+form#comment input:hover, form#comment textarea:hover,
+form#comment input:focus, form#comment textarea:focus
+{
+    border: 2px solid #999999;
+    margin: 0px;
+}
+
+form#comment textarea
+{
+    height: 10em;
+}
+
+form#comment input[type=submit]
+{
+    clear: both;
+    margin: 10px 0px;
+    width: 180px;
+    cursor: default;
 }

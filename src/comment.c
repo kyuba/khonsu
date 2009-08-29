@@ -56,6 +56,14 @@ define_symbol (sym_comment_added,    "comment-added");
 define_symbol (sym_base_name,        "base-name");
 define_symbol (sym_date,             "date");
 define_symbol (sym_time,             "time");
+define_symbol (sym_fieldset,         "fieldset");
+define_symbol (sym_legend,           "legend");
+define_symbol (sym_label,            "label");
+define_symbol (sym_input,            "input");
+define_symbol (sym_type,             "type");
+define_symbol (sym_textarea,         "textarea");
+define_symbol (sym_for,              "for");
+define_symbol (sym_value,            "value");
 define_string (str_dot,              ".");
 define_string (str_dot_ksu,          ".ksu");
 define_string (str_post,             "post");
@@ -64,8 +72,15 @@ define_string (str_comment,          "comment");
 define_string (str_comment_by_s,     "Comment by ");
 define_string (str_scomments,        "/comment/");
 define_string (str_Comments,         "Comments");
+define_string (str_Add_Comment,      "Add Comment");
+define_string (str_Message,          "Message");
+define_string (str_Name,             "Name");
+define_string (str_Anonymous,        "Anonymous");
+define_string (str_submit,           "submit");
 define_string (str_text_html,        "text/html");
 define_string (str_text_xhtml,       "application/xhtml+xml");
+define_string (str_comment_name,     "comment:name");
+define_string (str_comment_text,     "comment:text");
 
 static sexpr webroot          = sx_nonexistent;
 
@@ -151,7 +166,24 @@ static sexpr previous_comments (sexpr base, sexpr env)
 
 static sexpr make_comment_box (sexpr ext)
 {
-    return cons (sym_form, cons (lx_make_environment (cons (cons (sym_id, str_comment), cons (cons (sym_action, (nexp (ext) ? str_comment : sx_join (str_comment, str_dot, ext))), cons (cons (sym_method, str_put), sx_end_of_list)))), sx_end_of_list));
+    return cons (sym_form, cons (lx_make_environment (cons (cons (sym_id,
+        str_comment), cons (cons (sym_action, (nexp (ext) ? str_comment :
+        sx_join (str_comment, str_dot, ext))), cons (cons (sym_method, str_put),
+        sx_end_of_list)))), cons (cons (sym_fieldset, cons (cons (sym_legend,
+        cons (str_Add_Comment, sx_end_of_list)), cons (cons (sym_label, cons
+        (lx_make_environment(cons (cons (sym_for, str_comment_name),
+        sx_end_of_list)), cons (str_Name, sx_end_of_list))), cons (cons
+        (sym_input, cons (lx_make_environment(cons (cons (sym_id,
+        str_comment_name), cons (cons (sym_name, str_comment_name), cons (cons
+        (sym_value, str_Anonymous), sx_end_of_list)))), sx_end_of_list)), cons
+        (cons (sym_label, cons (lx_make_environment(cons (cons (sym_for,
+        str_comment_text), sx_end_of_list)), cons (str_Message,
+        sx_end_of_list))), cons (cons (sym_textarea, cons (lx_make_environment
+        (cons (cons (sym_id, str_comment_text), cons (cons (sym_name,
+        str_comment_text), sx_end_of_list))), cons (str_Message,
+        sx_end_of_list))), cons (cons (sym_input, cons (lx_make_environment
+        (cons (cons (sym_type, str_submit), sx_end_of_list)), sx_end_of_list)),
+        sx_end_of_list))))))), sx_end_of_list)));
 }
 
 static sexpr document (sexpr args, sexpr *env)
