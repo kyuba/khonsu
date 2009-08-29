@@ -46,12 +46,12 @@ h2
 
 h3
 {
-    font-size: 1.6em;
+    font-size: 1.4em;
 }
 
 h4
 {
-    font-size: 1.4em;
+    font-size: 1.3em;
 }
 
 h5
@@ -273,6 +273,13 @@ form#comment fieldset legend, form#comment fieldset:hover *
 
 form#comment fieldset legend
 {
+    color: #00007f;
+    cursor: pointer;
+}
+
+form#comment fieldset:hover legend
+{
+    color: black;
     cursor: default;
 }
 

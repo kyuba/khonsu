@@ -58,10 +58,11 @@ define_string (str_text_plain,          "text/plain");
 #define HTTP_ACCEPT_ENVIRONMENT          "HTTP_ACCEPT="
 #define HTTP_ACCEPT_LANGUAGE_ENVIRONMENT "HTTP_ACCEPT_LANGUAGE="
 #define HTTP_USER_AGENT_ENVIRONMENT      "HTTP_USER_AGENT="
+#define CONTENT_LENGTH_ENVIRONMENT       "CONTENT_LENGTH="
 #define REQUEST_METHOD_ENVIRONMENT       "REQUEST_METHOD="
 #define CONTENT_TYPE_ENVIRONMENT         "CONTENT_TYPE="
 #define CONTENT_LENGTH_ENVIRONMENT       "CONTENT_LENGTH="
-#define KHONSU_CGI_IDENTIFIER 10
+#define KHONSU_CGI_IDENTIFIER            10
 
 #define HTTP_STATUS               "Status: "
 #define HTTP_200_OK               "200 OK"
@@ -76,13 +77,14 @@ define_string (str_text_plain,          "text/plain");
 #define MAX_NUM_LENGTH            32
 
 static const char *socket_path = "khonsu-socket";
-static struct io *out;
+static struct io *out, *in;
 static sexpr script_name;
 static sexpr id_token;
 static struct sexpr_io *io;
 static sexpr rq_environment;
 static sexpr rq_method;
 static char no_output = 1;
+static unsigned int content_length = 0;
 
 static void request (sexpr env, sexpr sn)
 {
@@ -278,6 +280,21 @@ static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
     }
 }
 
+static void stdio_on_read (struct io *in, void *aux)
+{
+    if (in->length >= content_length)
+    {
+        unsigned int i;
+        char *b = in->buffer;
+
+        for (i = 0; i < content_length; i++)
+        {
+        }
+
+        request (rq_environment, script_name);
+    }
+}
+
 #define env_test_add(j,ev,key,env,mk)\
         for (j = 0; ((c = t[j]) != (char)0) && (c == ev[j]); j++);\
         if ((j == (sizeof (ev) - 1)) && (t[0] == ev[0]))\
@@ -385,6 +402,28 @@ int cmain ()
             continue;
         }
 
+        for (j = 0;
+             ((c = t[j]) != (char)0) && (c == CONTENT_LENGTH_ENVIRONMENT[j]);
+             j++);
+
+        if ((j == (sizeof (CONTENT_LENGTH_ENVIRONMENT) - 1)) &&
+            (t[0] == CONTENT_LENGTH_ENVIRONMENT[0]))
+        {
+            content_length = 0;
+
+            while ((c = t[j]) != (char)0)
+            {
+                if ((c >= '0') && (c <= '9'))
+                {
+                    content_length = (content_length * 10) + (c - '0');
+                }
+
+                j++;
+            }
+
+            continue;
+        }
+
         env_test_add (j, CONTENT_TYPE_ENVIRONMENT, sym_request_body_type, env,
                       make_string);
         env_test_add (j, CONTENT_LENGTH_ENVIRONMENT, sym_request_body_length,
@@ -398,11 +437,21 @@ int cmain ()
     }
 
     multiplex_add_io (out, (void *)0, (void *)0, (void *)0);
+
+    rq_environment = env;
+
     io = sx_open_socket (socket_path);
     multiplex_add_sexpr (io, on_socket_read, (void *)0);
 
-    rq_environment = env;
-    request (env, script_name);
+    if (content_length > 0)
+    {
+        in = io_open_stdin();
+        multiplex_add_io (in, stdio_on_read, stdio_on_read, (void *)0);
+    }
+    else
+    {
+        request (env, script_name);
+    }
 
     while (multiplex () != mx_nothing_to_do);
 

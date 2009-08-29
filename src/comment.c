@@ -168,7 +168,7 @@ static sexpr make_comment_box (sexpr ext)
 {
     return cons (sym_form, cons (lx_make_environment (cons (cons (sym_id,
         str_comment), cons (cons (sym_action, (nexp (ext) ? str_comment :
-        sx_join (str_comment, str_dot, ext))), cons (cons (sym_method, str_put),
+        sx_join (str_comment, str_dot, ext))), cons (cons (sym_method,str_post),
         sx_end_of_list)))), cons (cons (sym_fieldset, cons (cons (sym_legend,
         cons (str_Add_Comment, sx_end_of_list)), cons (cons (sym_label, cons
         (lx_make_environment(cons (cons (sym_for, str_comment_name),
