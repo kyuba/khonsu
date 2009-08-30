@@ -235,6 +235,11 @@ div.comment p:first-letter
     font-weight: normal;
 }
 
+form#comment
+{
+    clear: both;
+}
+
 form#comment label
 {
     display: block;
