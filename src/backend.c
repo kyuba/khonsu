@@ -42,6 +42,7 @@ struct transdata
 };
 
 define_symbol (sym_include,          "include");
+define_symbol (sym_original_name,    "original-name");
 define_symbol (sym_base_name,        "base-name");
 define_symbol (sym_extension,        "extension");
 define_symbol (sym_accept,           "accept");
@@ -282,6 +283,7 @@ static sexpr include (sexpr arguments, sexpr *env)
         afree (i, tmp);
 
         e = lx_environment_bind (e, sym_base_name, te);
+        e = lx_environment_bind (e, sym_original_name, car (arguments));
         e = lx_environment_bind (e, sym_extension, type);
 
         te = sx_join (te, str_dot_ksu, str_nil);

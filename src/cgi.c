@@ -47,6 +47,9 @@ define_symbol (sym_request_body_type,   "request-body-type");
 define_symbol (sym_request_body_length, "request-body-length");
 define_symbol (sym_method,              "method");
 
+define_symbol (sym_Location,            "Location");
+define_symbol (sym_Vary,                "Vary");
+
 define_string (str_index,               "index");
 
 define_string (str_error_transcript_not_possible_xhtml,
@@ -88,7 +91,9 @@ static unsigned int content_length = 0;
 
 static void request (sexpr env, sexpr sn)
 {
-    id_token = cons (make_integer (KHONSU_CGI_IDENTIFIER), sn);
+    id_token =
+            cons (make_integer (KHONSU_CGI_IDENTIFIER), cons (sn,
+                  lx_environment_alist (env)));
 
     sx_write (io, cons (sym_request, cons (id_token,
                 cons (cons (rq_method, cons (env, cons (sn,
@@ -146,7 +151,9 @@ static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
 
         if (truep (equalp (sa, id_token)))
         {
+            unsigned int ml;
             const char *output = (const char *)0;
+            const char *e1, *e2;
             sexpr sxoutput = str_nil;
             sexpr env      = lx_make_environment (sx_end_of_list);
             sexpr mime     = sx_nonexistent;
@@ -176,6 +183,23 @@ static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
                 sx = cdr (sx);
             }
 
+            if (!nexp (t = lx_environment_lookup (env, sym_Location)))
+            {
+                e1 = sx_symbol (sym_Location);
+                e2 = sx_string (t);
+
+                for (ml = 0; e1[ml] != (char)0; ml++);
+                io_collect (out, e1, ml);
+                io_collect (out, ": ", 2);
+                for (ml = 0; e2[ml] != (char)0; ml++);
+                io_collect (out, e2, ml);
+                io_write (out, "\r\n\r\n", 4);
+
+                multiplex_del_sexpr (io);
+
+                return;
+            }
+
             if (!nexp (t = lx_environment_lookup (env, sym_format)))
             {
                 mime = t;
@@ -190,9 +214,8 @@ static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
             }
             else
             {
-                unsigned int n, ml;
+                unsigned int n;
                 const char *m;
-                const char *e1, *e2;
 
                 if (!nexp (mime))
                 {
@@ -247,8 +270,8 @@ static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
                         tb = cdr (ta);
                         ta = car (ta);
 
-                        if (truep (equalp (ta, sym_error)) ||
-                            truep (equalp (ta, sym_format)))
+                        if (/*!truep (equalp (ta, sym_Location)) &&*/
+                            !truep (equalp (ta, sym_Vary)))
                         {
                             t = cdr (t);
                             continue;
@@ -284,14 +307,62 @@ static void stdio_on_read (struct io *in, void *aux)
 {
     if (in->length >= content_length)
     {
-        unsigned int i;
-        char *b = in->buffer;
+        int i, j;
+        char *b = (char *)in->buffer, c, c1, c2;
+        sexpr sym = sx_nonexistent;
 
-        for (i = 0; i < content_length; i++)
+        for (i = 0, j = 0; i < content_length; i++, j++)
         {
+            switch ((c = b[i]))
+            {
+                case '%':
+                    if ((c1 = *(b + i + 1)) == (char)0) { break; }
+                    if ((c2 = *(b + i + 2)) == (char)0) { break; }
+
+                    b[j] = (char)
+                        ((((((c1 >= '0') && (c1 <= '9')) ? (c1-'0')    :
+                           (((c1 >= 'a') && (c1 <= 'f')) ? (c1-'a'+10) :
+                           (((c1 >= 'A') && (c1 <= 'F')) ? (c1-'A'+10) : 0))))
+                               << 4) |
+                          ((((c2 >= '0') && (c2 <= '9')) ? (c2-'0')    :
+                           (((c2 >= 'a') && (c2 <= 'f')) ? (c2-'a'+10) :
+                           (((c2 >= 'A') && (c2 <= 'F')) ? (c2-'A'+10) : 0)))));
+                    i += 2;
+                    break;
+                case '&':
+                    b[j] = 0;
+
+                    rq_environment = lx_environment_unbind
+                            (rq_environment, sym);
+                    rq_environment = lx_environment_bind
+                            (rq_environment, sym, make_string ((char *)b));
+
+                    j = -1;
+                    break;
+                case '=':
+                    b[j] = 0;
+                    sym = make_symbol ((char *)b);
+                    j = -1;
+                    break;
+                default:
+                    b[j] = c;
+                    break;
+            }
+        }
+
+        if (j > 0)
+        {
+            b[j] = 0;
+
+            rq_environment = lx_environment_unbind
+                    (rq_environment, sym);
+            rq_environment = lx_environment_bind
+                    (rq_environment, sym, make_string ((char *)b));
         }
 
         request (rq_environment, script_name);
+
+        in->position = in->length;
     }
 }
 

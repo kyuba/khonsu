@@ -32,6 +32,7 @@
 #include <curie/memory.h>
 #include <curie/filesystem.h>
 #include <curie/gc.h>
+#include <curie/time.h>
 
 struct transdata
 {
@@ -51,6 +52,7 @@ define_symbol (sym_sub_sub_section,  "sub-sub-section");
 define_symbol (sym_wrap,             "wrap");
 define_symbol (sym_form,             "form");
 define_symbol (sym_name,             "name");
+define_symbol (sym_post,             "post");
 define_symbol (sym_div,              "div");
 define_symbol (sym_comment_added,    "comment-added");
 define_symbol (sym_base_name,        "base-name");
@@ -64,6 +66,13 @@ define_symbol (sym_type,             "type");
 define_symbol (sym_textarea,         "textarea");
 define_symbol (sym_for,              "for");
 define_symbol (sym_value,            "value");
+define_symbol (sym_paragraph,        "paragraph");
+define_symbol (sym_comment_name,     "comment:name");
+define_symbol (sym_comment_text,     "comment:text");
+define_symbol (sym_comment_source,   "comment:source");
+define_symbol (sym_comment_target,   "comment:target");
+define_symbol (sym_original_name,    "original-name");
+define_symbol (sym_Location,         "Location");
 define_string (str_dot,              ".");
 define_string (str_dot_ksu,          ".ksu");
 define_string (str_post,             "post");
@@ -81,6 +90,9 @@ define_string (str_text_html,        "text/html");
 define_string (str_text_xhtml,       "application/xhtml+xml");
 define_string (str_comment_name,     "comment:name");
 define_string (str_comment_text,     "comment:text");
+define_string (str_comment_source,   "comment:source");
+define_string (str_comment_target,   "comment:target");
+define_string (str_hidden,           "hidden");
 
 static sexpr webroot          = sx_nonexistent;
 
@@ -159,21 +171,24 @@ static sexpr previous_comments (sexpr base, sexpr env)
             multiplex ();
         }
         while (td.done == 0);
-    }
 
-    return cons (sym_sub_section, cons (str_Comments, r));
+        return cons (sym_sub_section, cons (str_Comments, r));
+    }
+    else
+    {
+        return str_nil;
+    }
 }
 
-static sexpr make_comment_box (sexpr ext)
+static sexpr make_comment_box (sexpr ext, sexpr source, sexpr target)
 {
     return cons (sym_form, cons (lx_make_environment (cons (cons (sym_id,
-        str_comment), cons (cons (sym_action, (nexp (ext) ? str_comment :
-        sx_join (str_comment, str_dot, ext))), cons (cons (sym_method,str_post),
-        sx_end_of_list)))), cons (cons (sym_fieldset, cons (cons (sym_legend,
-        cons (str_Add_Comment, sx_end_of_list)), cons (cons (sym_label, cons
-        (lx_make_environment(cons (cons (sym_for, str_comment_name),
-        sx_end_of_list)), cons (str_Name, sx_end_of_list))), cons (cons
-        (sym_input, cons (lx_make_environment(cons (cons (sym_id,
+        str_comment), cons (cons (sym_action, str_comment), cons (cons
+        (sym_method, str_post), sx_end_of_list)))), cons (cons (sym_fieldset,
+        cons (cons (sym_legend, cons (str_Add_Comment, sx_end_of_list)), cons
+        (cons (sym_label, cons (lx_make_environment(cons (cons (sym_for,
+        str_comment_name), sx_end_of_list)), cons (str_Name, sx_end_of_list))),
+        cons (cons (sym_input, cons (lx_make_environment(cons (cons (sym_id,
         str_comment_name), cons (cons (sym_name, str_comment_name), cons (cons
         (sym_value, str_Anonymous), sx_end_of_list)))), sx_end_of_list)), cons
         (cons (sym_label, cons (lx_make_environment(cons (cons (sym_for,
@@ -183,7 +198,13 @@ static sexpr make_comment_box (sexpr ext)
         str_comment_text), sx_end_of_list))), cons (str_Message,
         sx_end_of_list))), cons (cons (sym_input, cons (lx_make_environment
         (cons (cons (sym_type, str_submit), sx_end_of_list)), sx_end_of_list)),
-        sx_end_of_list))))))), sx_end_of_list)));
+        cons (cons (sym_input, cons (lx_make_environment (cons (cons (sym_type,
+        str_hidden), cons (cons (sym_name, str_comment_source), cons (cons
+        (sym_value, source), sx_end_of_list)))), sx_end_of_list)), cons (cons
+        (sym_input, cons (lx_make_environment (cons (cons (sym_type,
+        str_hidden), cons (cons (sym_name, str_comment_target), cons (cons
+        (sym_value, target), sx_end_of_list)))), sx_end_of_list)),
+        sx_end_of_list))))))))), sx_end_of_list)));
 }
 
 static sexpr document (sexpr args, sexpr *env)
@@ -211,8 +232,10 @@ static sexpr document (sexpr args, sexpr *env)
     if (truep (equalp (e, str_text_xhtml)) || truep (equalp (e, str_text_html)))
     {
         args = cons (make_comment_box (lx_environment_lookup (*env,
-            sym_extension)), cons (previous_comments (lx_environment_lookup
-            (*env, sym_base_name), *env), args));
+            sym_extension), lx_environment_lookup (*env, sym_original_name),
+            lx_environment_lookup (*env, sym_base_name)),
+            cons (previous_comments (lx_environment_lookup (*env,
+            sym_base_name), *env), args));
     }
     else
     {
@@ -223,6 +246,63 @@ static sexpr document (sexpr args, sexpr *env)
     en = lx_environment_bind (en, sym_comment_added, sx_true);
 
     return cons (sym_document, cons (en, sx_reverse (args)));
+}
+
+static sexpr post (sexpr args, sexpr *env)
+{
+    sexpr vars = car (args), name = car (cdr (args));
+
+    if (truep (equalp (name, str_comment)))
+    {
+        sexpr r = sx_end_of_list, t = sx_join
+           (webroot, str_scomments,
+            sx_join (kho_normalise(lx_environment_lookup (vars,
+                                                          sym_comment_target)),
+                     str_dot_ksu, str_nil)),
+              target = lx_environment_lookup (vars, sym_comment_source);
+        struct sexpr_io *io;
+        struct datetime dtime;
+
+        dt_get (&dtime);
+
+        if (truep (filep (t)))
+        {
+            sexpr re;
+            io = sx_open_io (io_open_read (sx_string (t)), io_open_null);
+
+            while (!eofp (re = sx_read (io)))
+            {
+                if (!nexp (re))
+                {
+                    r = cons (re, r);
+                }
+            }
+
+            sx_close_io (io);
+        }
+
+        r = cons (cons (sym_object, cons (cons (sym_comment, cons (lx_environment_lookup (vars, sym_comment_name), cons (make_integer (dtime.date), cons (make_integer (dtime.time), cons (cons (sym_paragraph, cons (lx_environment_lookup (vars, sym_comment_text), sx_end_of_list)), sx_end_of_list))))), sx_end_of_list)), r);
+
+        io = sx_open_io (io_open_null, io_open_write (sx_string (t)));
+
+        r = sx_reverse (r);
+
+        while (consp (r))
+        {
+            sx_write (io, car (r));
+            r = cdr (r);
+        }
+
+        sx_close_io (io);
+
+        vars = lx_environment_bind (vars, sym_Location, target);
+
+        return cons (vars, cons (target, sx_end_of_list));
+    }
+    else
+    {
+        return cons (sym_post, args);
+    }
 }
 
 int cmain ()
@@ -237,6 +317,8 @@ int cmain ()
       (kho_environment,sym_document,lx_foreign_lambda (sym_document,document));
     kho_environment = lx_environment_bind
       (kho_environment, sym_comment, lx_foreign_lambda (sym_comment, comment));
+    kho_environment = lx_environment_bind
+      (kho_environment, sym_post,    lx_foreign_lambda (sym_post,    post));
 
     while (multiplex () != mx_nothing_to_do)
     {
