@@ -204,6 +204,11 @@ static sexpr include (sexpr arguments, sexpr *env)
     const char *ts = sx_string (to);
     char *tmp;
 
+    if (nexp (lx_environment_lookup (e, sym_original_name)))
+    {
+        e = lx_environment_bind (e, sym_original_name, car (arguments));
+    }
+
     if (truep (filep (t)))
     {
         return cons (e, cons (cons (sym_verbatim,
@@ -283,7 +288,6 @@ static sexpr include (sexpr arguments, sexpr *env)
         afree (i, tmp);
 
         e = lx_environment_bind (e, sym_base_name, te);
-        e = lx_environment_bind (e, sym_original_name, car (arguments));
         e = lx_environment_bind (e, sym_extension, type);
 
         te = sx_join (te, str_dot_ksu, str_nil);

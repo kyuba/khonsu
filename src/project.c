@@ -59,6 +59,7 @@ define_symbol (sym_short_description,          "short-description");
 define_symbol (sym_sub_section,                "sub-section");
 define_symbol (sym_elaborate,                  "elaborate");
 define_symbol (sym_project,                    "project");
+define_symbol (sym_original_name,              "original-name");
 define_string (str_selected,                   "selected");
 define_string (str_menu,                       "menu");
 define_string (str_slash,                      "/");
@@ -266,6 +267,8 @@ static sexpr request (sexpr arguments, sexpr *env)
                 (etarget[3]=='j') && (etarget[4]=='e') && (etarget[5]=='c') &&
                 (etarget[6]=='t') && (etarget[7]=='-'))
             {
+                te = lx_environment_bind (te, sym_original_name, target);
+
                 a2 = sx_join (str_project_slash,make_string(etarget+8),str_nil);
                 r = cons (cons(sym_get,cons (te,cons (a2, sx_end_of_list))),r);
             }
