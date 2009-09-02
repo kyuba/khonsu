@@ -344,6 +344,9 @@ static void stdio_on_read (struct io *in, void *aux)
                     sym = make_symbol ((char *)b);
                     j = -1;
                     break;
+                case '+':
+                    b[j] = ' ';
+                    break;
                 default:
                     b[j] = c;
                     break;
