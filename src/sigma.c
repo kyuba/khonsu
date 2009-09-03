@@ -548,7 +548,7 @@ static sexpr sx_date (sexpr arguments, sexpr *env)
     struct date dt;
     sexpr ts;
     int i, j;
-    int_time it = sx_integer (ta);
+    int_date it = sx_integer (ta);
 
     dt_split_kin (it, &dt);
 
