@@ -32,6 +32,7 @@
 #include <curie/memory.h>
 #include <curie/filesystem.h>
 #include <curie/gc.h>
+#include <curie/directory.h>
 
 struct transdata
 {
@@ -59,17 +60,22 @@ define_symbol (sym_short_description,          "short-description");
 define_symbol (sym_sub_section,                "sub-section");
 define_symbol (sym_elaborate,                  "elaborate");
 define_symbol (sym_project,                    "project");
+define_symbol (sym_project_release,            "project-release");
 define_symbol (sym_original_name,              "original-name");
 define_string (str_selected,                   "selected");
 define_string (str_menu,                       "menu");
 define_string (str_slash,                      "/");
 define_string (str_sprojects,                  "/project/");
+define_string (str_sprojectsreleases,          "/project/release/");
+define_string (str_ddadksu,                    "-(.*)\\.ksu");
 define_string (str_project_dash,               "project-");
+define_string (str_release_dash,               "release-");
 define_string (str_project_slash,              "project/");
 define_string (str_space,                      " ");
 define_string (str_dot,                        ".");
 define_string (str_icon,                       "icon");
 define_string (str_Project,                    "Project");
+define_string (str_Releases,                   "Releases");
 define_string (str_dot_ksu,                    ".ksu");
 define_string (str_png_icon_no_picture_png,    "png/icon-no-picture.png");
 
@@ -155,6 +161,7 @@ static sexpr project_elaborate (sexpr args, sexpr *env)
     {
         sexpr t, v, icon = str_png_icon_no_picture_png, desc = sx_nonexistent,
               sdesc = sx_nonexistent, a;
+        const char *p;
 
         while (consp (args))
         {
@@ -178,10 +185,16 @@ static sexpr project_elaborate (sexpr args, sexpr *env)
             args = cdr (args);
         }
 
+        a = lx_environment_lookup (*env, sym_base_name);
+        p = sx_string (a);
+
         return cons (sym_object, cons (cons (sym_document, cons (sx_join
             (str_Project, str_space, pn), cons (cons (sym_menu, sx_end_of_list),
-            cons (desc, cons (cons (sym_image, cons (icon, sx_end_of_list)),
-            sx_end_of_list))))), sx_end_of_list));
+            cons (cons (sym_image, cons (icon, sx_end_of_list)), cons (desc,
+            cons (cons (sym_section, cons (str_Releases, cons
+            (read_directory_sx(sx_join(webroot, str_sprojectsreleases,
+            sx_join (make_string (p + 8), str_ddadksu, str_nil))),
+            sx_end_of_list))), sx_end_of_list)))))), sx_end_of_list));
     }
 }
 
