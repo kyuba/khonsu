@@ -67,7 +67,9 @@ static sexpr reply (sexpr arguments, struct machine_state *st)
     sexpr rv = sx_end_of_list;
     sexpr menv = st->environment;
     struct stdio_list *l = kho_stdio_list;
-    sexpr rp;
+    sexpr rp, tag = car (arguments);
+
+    arguments = cdr (arguments);
 
     while (consp(arguments))
     {
@@ -104,7 +106,7 @@ static sexpr reply (sexpr arguments, struct machine_state *st)
         arguments = cdr (arguments);
     }
 
-    rp = cons (sym_reply, sx_reverse (rv));
+    rp = cons (sym_reply, cons (tag, sx_reverse (rv)));
 
     while (l != (struct stdio_list *)0)
     {
