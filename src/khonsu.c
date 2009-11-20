@@ -58,14 +58,14 @@ static void sx_stdio_read (sexpr sx, struct sexpr_io *io, void *aux)
     }
     else
     {
-        lx_eval (sx, &kho_environment);
+        lx_eval (sx, kho_environment);
     }
 }
 
-static sexpr reply (sexpr arguments, sexpr *env)
+static sexpr reply (sexpr arguments, struct machine_state *st)
 {
     sexpr rv = sx_end_of_list;
-    sexpr menv = *env;
+    sexpr menv = st->environment;
     struct stdio_list *l = kho_stdio_list;
     sexpr rp;
 
@@ -79,7 +79,7 @@ static sexpr reply (sexpr arguments, sexpr *env)
         }
         else
         {
-            sexpr r = lx_eval (a, &menv);
+            sexpr r = lx_eval (a, menv);
             if (consp (r))
             {
                 sexpr ra = car (r);
@@ -120,13 +120,13 @@ static sexpr reply (sexpr arguments, sexpr *env)
     return sx_nonexistent;
 }
 
-static sexpr request (sexpr arguments, sexpr *env)
+static sexpr request (sexpr arguments, struct machine_state *st)
 {
     relay_sub (arguments);
     return sx_nonexistent;
 }
 
-static sexpr verbatim (sexpr arguments, sexpr *env)
+static sexpr verbatim (sexpr arguments, struct machine_state *st)
 {
     return cons (sym_verbatim, arguments);
 }
@@ -145,10 +145,10 @@ static sexpr object_sub (sexpr arguments, sexpr env)
 
         arguments = cdr (arguments);
 
-        tx = lx_eval (t, &env);
+        tx = lx_eval (t, env);
         if (primitivep (tx))
         {
-            return lx_eval (cons (tx, arguments), &env);
+            return lx_eval (cons (tx, arguments), env);
         }
 
         at = car (arguments);
@@ -171,7 +171,7 @@ static sexpr object_sub (sexpr arguments, sexpr env)
 
         if (symbolp (t) && !nexp (lx_environment_lookup (env, t)))
         {
-            return lx_eval (cons (t, sx_reverse (r)), &env);
+            return lx_eval (cons (t, sx_reverse (r)), env);
         }
 
         if (!nexp (at))
@@ -187,9 +187,9 @@ static sexpr object_sub (sexpr arguments, sexpr env)
     return arguments;
 }
 
-static sexpr object (sexpr arguments, sexpr *env)
+static sexpr object (sexpr arguments, struct machine_state *st)
 {
-    sexpr r = object_sub (arguments, *env), ra;
+    sexpr r = object_sub (arguments, st->environment), ra;
     if (consp (r) && ((ra = car (r)), stringp (ra)))
     {
         return kho_merge (r);
@@ -200,18 +200,18 @@ static sexpr object (sexpr arguments, sexpr *env)
     }
 }
 
-static sexpr debug (sexpr arguments, sexpr *env)
+static sexpr debug (sexpr arguments, struct machine_state *st)
 {
     return cons (sym_debug, cons (ddebug, arguments));
 }
 
-static sexpr quit (sexpr arguments, sexpr *env)
+static sexpr quit (sexpr arguments, struct machine_state *st)
 {
     willquit = 1;
     return cons (sym_quit, sx_end_of_list);
 }
 
-static sexpr configure (sexpr arguments, sexpr *env)
+static sexpr configure (sexpr arguments, struct machine_state *st)
 {
     static char s = 0;
     if (!s)
@@ -268,8 +268,7 @@ void initialise_khonsu ()
 
         if (curie_argv[1])
         {
-            struct sexpr_io * i = sx_open_io (io_open_read (curie_argv[1]),
-                                              io_open_null);
+            struct sexpr_io * i = sx_open_i (io_open_read (curie_argv[1]));
             sexpr c = sx_end_of_list, d;
 
             multiplex_add_sexpr (i, ik_on_read, &c);

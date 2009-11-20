@@ -150,7 +150,7 @@ static void configure_callback_work (struct transformation **t, sexpr sx)
     while (consp (b))
     {
         d = car (b);
-        i = sx_open_io (io_open_read(sx_string (d)), io_open_null);
+        i = sx_open_i (io_open_read(sx_string (d)));
 
         multiplex_add_sexpr (i, ccw_on_read, &td);
 
@@ -464,9 +464,10 @@ static sexpr object_sub (sexpr arguments, sexpr path, sexpr env)
              path, env);
 }
 
-static sexpr object (sexpr arguments, sexpr *env)
+static sexpr object (sexpr arguments, struct machine_state *st)
 {
-    return cons (sym_object, object_sub (arguments, sx_end_of_list, *env));
+    sexpr env = st->environment;
+    return cons (sym_object, object_sub (arguments, sx_end_of_list, env));
 }
 
 int cmain ()

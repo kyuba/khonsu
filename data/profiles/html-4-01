@@ -1,0 +1,64 @@
+(tao:map-extension "html"      "text/html")
+(tao:map-extension "html-4"    "text/html")
+(tao:map-extension "html-4-01" "text/html")
+
+(tao:transform
+  (tao:match format . "text/html")
+
+  (tao:replace
+     ("document") .
+     ("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">"
+      (html (head (title (tao:item 1)))
+            (body (h1 (tao:item 1))
+                  (tao:tail 2)))))
+
+  (tao:replace
+     ("paragraph") .
+     (p (tao:all)))
+
+  (tao:replace
+     ("wrap") .
+     (div (tao:all)))
+
+  (tao:replace
+     ("section") .
+     ((h2 (tao:item 1))
+      (tao:tail 2)))
+
+  (tao:replace
+     ("sub-section") .
+     ((h3 (tao:item 1))
+      (tao:tail 2)))
+
+  (tao:replace
+     ("sub-sub-section") .
+     ((h4 (tao:item 1))
+      (tao:tail 2)))
+
+  (tao:replace
+     ("formal-paragraph") .
+     ((h5 (tao:item 1))
+      (tao:tail 2)))
+
+  (tao:replace
+     ("link") .
+     (a (tao:all)))
+
+  (tao:replace
+     ("icon") .
+     (a (ε (class . "icon") (href . (tao:item 1)))
+      (img (ε (src . (tao:item 3)) (alt . (tao:item 1))))
+      (em (tao:item 2))
+      (tao:item 4)))
+
+  (tao:replace
+     ("image") .
+     (img (ε (src . (tao:item 1)))))
+
+  (tao:replace
+     ("list") .
+     (ul (tao:all)))
+
+  (tao:replace
+     ("item") .
+     (li (tao:all))))

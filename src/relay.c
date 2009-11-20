@@ -37,7 +37,7 @@ static struct sexpr_io *sxio = (struct sexpr_io *)0;
 
 static void sx_io_read (sexpr sx, struct sexpr_io *io, void *aux)
 {
-    lx_eval (sx, &kho_environment);
+    lx_eval (sx, kho_environment);
 }
 
 void relay_spawn (sexpr configuration)
@@ -101,7 +101,7 @@ void relay_sub (sexpr request)
 {
     if (sxio == (struct sexpr_io *)0)
     {
-        lx_eval (cons (sym_reply, request), &kho_environment);
+        lx_eval (cons (sym_reply, request), kho_environment);
     }
     else
     {

@@ -106,7 +106,7 @@ static void configure_callback (sexpr sx)
     }
 }
 
-static sexpr comment (sexpr args, sexpr *env)
+static sexpr comment (sexpr args, struct machine_state *st)
 {
     sexpr name = car (args), tt, td;
 
@@ -142,7 +142,7 @@ static void include_on_read (sexpr sx, struct sexpr_io *io, void *aux)
         if (truep (equalp (sym_object, n)))
         {
             (*(td->data)) =
-                    cons (lx_eval (sx, &(td->environment)), (*(td->data)));
+                    cons (lx_eval (sx, (td->environment)), (*(td->data)));
         }
         else
         {
@@ -162,8 +162,7 @@ static sexpr previous_comments (sexpr base, sexpr env)
     if (truep (filep (t)))
     {
         struct transdata td = { env, &r, 0 };
-        struct sexpr_io *in = sx_open_io (io_open_read (sx_string (t)),
-                                          io_open_null);
+        struct sexpr_io *in = sx_open_i (io_open_read (sx_string (t)));
         multiplex_add_sexpr (in, include_on_read, &td);
 
         do
@@ -207,8 +206,9 @@ static sexpr make_comment_box (sexpr ext, sexpr source, sexpr target)
         sx_end_of_list))))))))), sx_end_of_list)));
 }
 
-static sexpr document (sexpr args, sexpr *env)
+static sexpr document (sexpr args, struct machine_state *st)
 {
+    sexpr env = st->environment;
     sexpr e, en = car (args);
 
     if (environmentp (en))
@@ -225,22 +225,22 @@ static sexpr document (sexpr args, sexpr *env)
         return cons (sym_document, cons (en, args));
     }
 
-    e = lx_environment_lookup (*env, sym_format);
+    e = lx_environment_lookup (env, sym_format);
 
     args = sx_reverse (args);
 
     if (truep (equalp (e, str_text_xhtml)) || truep (equalp (e, str_text_html)))
     {
-        args = cons (make_comment_box (lx_environment_lookup (*env,
-            sym_extension), lx_environment_lookup (*env, sym_original_name),
-            lx_environment_lookup (*env, sym_base_name)),
-            cons (previous_comments (lx_environment_lookup (*env,
-            sym_base_name), *env), args));
+        args = cons (make_comment_box (lx_environment_lookup (env,
+            sym_extension), lx_environment_lookup (env, sym_original_name),
+            lx_environment_lookup (env, sym_base_name)),
+            cons (previous_comments (lx_environment_lookup (env,
+            sym_base_name), env), args));
     }
     else
     {
         args = cons (previous_comments
-          (lx_environment_lookup (*env, sym_base_name), *env), args);
+          (lx_environment_lookup (env, sym_base_name), env), args);
     }
 
     en = lx_environment_bind (en, sym_comment_added, sx_true);
@@ -248,7 +248,7 @@ static sexpr document (sexpr args, sexpr *env)
     return cons (sym_document, cons (en, sx_reverse (args)));
 }
 
-static sexpr post (sexpr args, sexpr *env)
+static sexpr post (sexpr args, struct machine_state *st)
 {
     sexpr vars = car (args), name = car (cdr (args));
 
@@ -268,7 +268,7 @@ static sexpr post (sexpr args, sexpr *env)
         if (truep (filep (t)))
         {
             sexpr re;
-            io = sx_open_io (io_open_read (sx_string (t)), io_open_null);
+            io = sx_open_i (io_open_read (sx_string (t)));
 
             while (!eofp (re = sx_read (io)))
             {
@@ -283,7 +283,7 @@ static sexpr post (sexpr args, sexpr *env)
 
         r = cons (cons (sym_object, cons (cons (sym_comment, cons (lx_environment_lookup (vars, sym_comment_name), cons (make_integer (dtime.date), cons (make_integer (dtime.time), cons (cons (sym_paragraph, cons (lx_environment_lookup (vars, sym_comment_text), sx_end_of_list)), sx_end_of_list))))), sx_end_of_list)), r);
 
-        io = sx_open_io (io_open_null, io_open_write (sx_string (t)));
+        io = sx_open_o (io_open_write (sx_string (t)));
 
         r = sx_reverse (r);
 

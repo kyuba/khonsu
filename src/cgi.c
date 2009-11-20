@@ -151,7 +151,7 @@ static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
 
         if (truep (equalp (sa, id_token)))
         {
-            unsigned int ml;
+            unsigned int ml = 0;
             const char *output = (const char *)0;
             const char *e1, *e2;
             sexpr sxoutput = str_nil;
@@ -215,7 +215,7 @@ static void on_socket_read (sexpr sx, struct sexpr_io *io, void *aux)
             else
             {
                 unsigned int n;
-                const char *m;
+                const char *m = (const char *)0;
 
                 if (!nexp (mime))
                 {

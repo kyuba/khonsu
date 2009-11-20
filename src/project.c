@@ -106,7 +106,7 @@ static void include_on_read (sexpr sx, struct sexpr_io *io, void *aux)
         if (truep (equalp (sym_object, n)))
         {
             (*(td->data)) =
-                    cons (lx_eval (sx, &(td->environment)), (*(td->data)));
+                    cons (lx_eval (sx, (td->environment)), (*(td->data)));
         }
         else
         {
@@ -117,8 +117,7 @@ static void include_on_read (sexpr sx, struct sexpr_io *io, void *aux)
 
 static sexpr include_file (sexpr fn, sexpr env)
 {
-    struct sexpr_io *io = sx_open_io (io_open_read (sx_string (fn)),
-                                      io_open_null);
+    struct sexpr_io *io = sx_open_i (io_open_read (sx_string (fn)));
     sexpr data = sx_end_of_list;
 
     struct transdata td =
@@ -148,14 +147,15 @@ static sexpr include_project (sexpr file, sexpr env)
     return cons (sym_project, cons (file, sx_end_of_list));
 }
 
-static sexpr project_elaborate (sexpr args, sexpr *env)
+static sexpr project_elaborate (sexpr args, struct machine_state *st)
 {
+    sexpr env = st->environment;
     sexpr pn = car (args);
     args     = cdr (args);
 
     if (eolp (args))
     {
-        return include_project (pn, *env);
+        return include_project (pn, env);
     }
     else
     {
@@ -185,7 +185,7 @@ static sexpr project_elaborate (sexpr args, sexpr *env)
             args = cdr (args);
         }
 
-        a = lx_environment_lookup (*env, sym_base_name);
+        a = lx_environment_lookup (env, sym_base_name);
         p = sx_string (a);
 
         return cons (sym_object, cons (cons (sym_document, cons (sx_join
@@ -198,26 +198,27 @@ static sexpr project_elaborate (sexpr args, sexpr *env)
     }
 }
 
-static sexpr project (sexpr args, sexpr *env)
+static sexpr project (sexpr args, struct machine_state *st)
 {
+    sexpr env = st->environment;
     sexpr pn = car (args);
     args     = cdr (args);
 
     if (eolp (args))
     {
-        return include_project (pn, *env);
+        return include_project (pn, env);
     }
     else
     {
         sexpr t, v, icon = str_png_icon_no_picture_png, desc = sx_nonexistent,
               sdesc = sx_nonexistent, a, ext;
 
-        if (truep (lx_environment_lookup (*env, sym_elaborate)))
+        if (truep (lx_environment_lookup (env, sym_elaborate)))
         {
-            return project_elaborate (cons (pn, args), env);
+            return project_elaborate (cons (pn, args), st);
         }
 
-        ext = lx_environment_lookup (*env, sym_extension);
+        ext = lx_environment_lookup (env, sym_extension);
 
         while (consp (args))
         {
@@ -252,7 +253,7 @@ static sexpr project (sexpr args, sexpr *env)
     }
 }
 
-static sexpr request (sexpr arguments, sexpr *env)
+static sexpr request (sexpr arguments, struct machine_state *st)
 {
     sexpr a = arguments, r = sx_end_of_list, a2, a3;
 

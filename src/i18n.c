@@ -58,7 +58,7 @@ static sexpr get_acceptable_languages (sexpr lq)
     if (!nexp (lq))
     {
         const char *lqs = sx_string (lq);
-        char lqsm [KHO_MAX_HEADER_FIELD_LENGTH], semicolon;
+        char lqsm [KHO_MAX_HEADER_FIELD_LENGTH], semicolon = 0;
         sexpr n;
         int i = 0, il = 0;
 
@@ -123,7 +123,7 @@ static sexpr get_acceptable_languages (sexpr lq)
     return lcodes;
 }
 
-static sexpr request (sexpr arguments, sexpr *env)
+static sexpr request (sexpr arguments, struct machine_state *st)
 {
     sexpr a = arguments, r = sx_end_of_list, a2, a3;
 

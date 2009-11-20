@@ -86,7 +86,7 @@ static sexpr get_acceptable_types (sexpr lq)
     if (!nexp (lq))
     {
         const char *lqs = sx_string (lq);
-        char lqsm [KHO_MAX_HEADER_FIELD_LENGTH], semicolon;
+        char lqsm [KHO_MAX_HEADER_FIELD_LENGTH], semicolon = 0;
         sexpr n;
         int i = 0, il = 0;
 
@@ -184,7 +184,7 @@ static void include_on_read (sexpr sx, struct sexpr_io *io, void *aux)
         if (truep (equalp (sym_object, n)))
         {
             (*(td->data)) =
-                    cons (lx_eval (sx, &(td->environment)), (*(td->data)));
+                    cons (lx_eval (sx, (td->environment)), (*(td->data)));
         }
         else
         {
@@ -193,10 +193,11 @@ static void include_on_read (sexpr sx, struct sexpr_io *io, void *aux)
     }
 }
 
-static sexpr include (sexpr arguments, sexpr *env)
+static sexpr include (sexpr arguments, struct machine_state *st)
 {
+    sexpr env = st->environment;
     define_string (str_slash, "/");
-    sexpr e = *env, to = car (arguments), t = sx_join (webroot, str_slash, to),
+    sexpr e = env, to = car (arguments), t = sx_join (webroot, str_slash, to),
           data = sx_end_of_list, lang, lcodes, te, tf,
           type = sx_nonexistent, lcc;
     struct sexpr_io *io;
@@ -308,12 +309,11 @@ static sexpr include (sexpr arguments, sexpr *env)
                 {
                     struct transdata td =
                         { lx_environment_join (lx_environment_join
-                                (kho_environment, *env), e), &data, 0 };
+                                (kho_environment, env), e), &data, 0 };
 
                     e = lx_environment_bind (e, sym_format, tf);
 
-                    io = sx_open_io (io_open_read (sx_string (t)),
-                                     io_open_null);
+                    io = sx_open_i (io_open_read (sx_string (t)));
 
                     multiplex_add_sexpr (io, include_on_read, &td);
 
@@ -349,7 +349,7 @@ static sexpr include (sexpr arguments, sexpr *env)
     }
 }
 
-static sexpr get (sexpr arguments, sexpr *env)
+static sexpr get (sexpr arguments, struct machine_state *st)
 {
     sexpr e = car (arguments), r;
 
@@ -358,14 +358,20 @@ static sexpr get (sexpr arguments, sexpr *env)
         e = lx_make_environment (sx_end_of_list);
     }
 
-    r = include (cdr (arguments), &e);
+    r = include (cdr (arguments),
+                 (struct machine_state *)
+                 lx_make_state (sx_end_of_list, e, sx_end_of_list,
+                                sx_end_of_list));
 
     if (nexp (r))
     {
         e = lx_environment_bind (e, sym_error, sym_file_not_found);
 
         return include (cons (str_error_file_not_found_xhtml,
-                        sx_end_of_list), &e);
+                        sx_end_of_list),
+                        (struct machine_state *)
+                        lx_make_state (sx_end_of_list, e, sx_end_of_list,
+                                       sx_end_of_list));
     }
 
     return r;

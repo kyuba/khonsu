@@ -206,7 +206,7 @@ static void include_on_read (sexpr sx, struct sexpr_io *io, void *aux)
         if (truep (equalp (sym_object, n)))
         {
             (*(td->data)) =
-                    cons (lx_eval (sx, &(td->environment)), (*(td->data)));
+                    cons (lx_eval (sx, (td->environment)), (*(td->data)));
         }
         else
         {
@@ -217,8 +217,7 @@ static void include_on_read (sexpr sx, struct sexpr_io *io, void *aux)
 
 static sexpr include_file (sexpr fn, sexpr env)
 {
-    struct sexpr_io *io = sx_open_io (io_open_read (sx_string (fn)),
-                                      io_open_null);
+    struct sexpr_io *io = sx_open_i (io_open_read (sx_string (fn)));
     sexpr data = sx_end_of_list;
 
     struct transdata td =
@@ -296,10 +295,11 @@ static sexpr menu_selected_environment (sexpr a, sexpr b)
     return e;
 }
 
-static sexpr sub_menu (sexpr arguments, sexpr *env)
+static sexpr sub_menu (sexpr arguments, struct machine_state *st)
 {
+    sexpr env = st->environment;
     sexpr sx = sx_end_of_list, target, name, t, e, title,
-          ext = lx_environment_lookup (*env, sym_extension);
+          ext = lx_environment_lookup (env, sym_extension);
 
     title     = car (arguments);
     arguments = cdr (arguments);
@@ -311,7 +311,7 @@ static sexpr sub_menu (sexpr arguments, sexpr *env)
         name   = car (cdr (t));
 
         e = menu_selected_environment
-                (target, lx_environment_lookup (*env, sym_base_name));
+                (target, lx_environment_lookup (env, sym_base_name));
 
         sx = cons (cons (sym_item, cons (e, cons (cons (sym_link, cons
                 (lx_make_environment (cons (cons (sym_href, (nexp (ext) ? target
@@ -327,13 +327,17 @@ static sexpr sub_menu (sexpr arguments, sexpr *env)
                        sx_end_of_list);
 }
 
-static sexpr menu (sexpr arguments, sexpr *env)
+static sexpr menu (sexpr arguments, struct machine_state *st)
 {
+    sexpr env = st->environment;
     sexpr sx = sx_end_of_list, title;
+
+    title     = car (arguments),
+    arguments = cdr (arguments);
 
     if (eolp (arguments))
     {
-        return include_menu (title, *env);
+        return include_menu (title, env);
     }
 
     title     = car (arguments);
@@ -341,12 +345,12 @@ static sexpr menu (sexpr arguments, sexpr *env)
 
     if (eolp (arguments))
     {
-        return include_menu (title, *env);
+        return include_menu (title, env);
     }
 
     while (consp (arguments))
     {
-        sx = cons (sub_menu (car (arguments), env), sx);
+        sx = cons (sub_menu (car (arguments), st), sx);
 
         arguments = cdr (arguments);
     }
@@ -369,12 +373,13 @@ static sexpr include_contact (sexpr file, sexpr env)
     return cons (sym_contact, cons (file, sx_end_of_list));
 }
 
-static sexpr contact_elaborate (sexpr args, sexpr *env)
+static sexpr contact_elaborate (sexpr args, struct machine_state *st)
 {
+    sexpr env = st->environment;
     sexpr a = car (args);
     sexpr t, v, icon = str_png_icon_no_picture_png,
           fn = sx_nonexistent, ln = sx_nonexistent, sdesc = sx_nonexistent,
-          te, ae = lx_environment_lookup (*env, sym_format);
+          te, ae = lx_environment_lookup (env, sym_format);
     args = cdr (args);
 
     if (!truep (equalp (ae, str_text_xhtml)) &&
@@ -409,7 +414,7 @@ static sexpr contact_elaborate (sexpr args, sexpr *env)
         args = cdr (args);
     }
 
-    te = lx_environment_join (kho_environment, *env);
+    te = lx_environment_join (kho_environment, env);
 
 /*    cons (sym_tr, cons (sx_join (fn, str_space, ln), cons (sdesc, cons (cons
            (sym_image, cons (icon, sx_end_of_list)), sx_end_of_list)))),*/
@@ -429,17 +434,18 @@ static sexpr contact_elaborate (sexpr args, sexpr *env)
               (icon, sx_end_of_list)), sx_end_of_list)), sx_end_of_list))),
         sx_end_of_list)))),
         sx_end_of_list)), sx_end_of_list)))), sx_end_of_list)),
-     &te);
+     te);
 }
 
-static sexpr contact (sexpr args, sexpr *env)
+static sexpr contact (sexpr args, struct machine_state *st)
 {
+    sexpr env = st->environment;
     sexpr a = car (args);
     args    = cdr (args);
 
     if (eolp (args))
     {
-        return include_contact (a, *env);
+        return include_contact (a, env);
     }
     else
     {
@@ -447,12 +453,12 @@ static sexpr contact (sexpr args, sexpr *env)
               fn = sx_nonexistent, ln = sx_nonexistent, sdesc = sx_nonexistent,
               n = a, te, ext;
 
-        if (truep (lx_environment_lookup (*env, sym_elaborate)))
+        if (truep (lx_environment_lookup (env, sym_elaborate)))
         {
-            return contact_elaborate (cons (a, args), env);
+            return contact_elaborate (cons (a, args), st);
         }
 
-        ext = lx_environment_lookup (*env, sym_extension);
+        ext = lx_environment_lookup (env, sym_extension);
 
         while (consp (args))
         {
@@ -480,7 +486,7 @@ static sexpr contact (sexpr args, sexpr *env)
             args = cdr (args);
         }
 
-        te = lx_environment_join (kho_environment, *env);
+        te = lx_environment_join (kho_environment, env);
 
         return lx_eval (cons (sym_object, cons (cons (sym_icon,
                  cons (sx_join (str_contact_dash, n,
@@ -489,11 +495,11 @@ static sexpr contact (sexpr args, sexpr *env)
                  cons (sx_join (fn, str_space, ln),
                  cons (icon,
                  cons (sdesc, sx_end_of_list))))),
-                 sx_end_of_list)), &te);
+                 sx_end_of_list)), te);
     }
 }
 
-static sexpr request (sexpr arguments, sexpr *env)
+static sexpr request (sexpr arguments, struct machine_state *st)
 {
     sexpr a = arguments, r = sx_end_of_list, a2, a3;
 
@@ -541,7 +547,7 @@ static sexpr request (sexpr arguments, sexpr *env)
     return sx_nonexistent;
 }
 
-static sexpr sx_date (sexpr arguments, sexpr *env)
+static sexpr sx_date (sexpr arguments, struct machine_state *st)
 {
     sexpr ta = car (arguments);
     char s [15], *se;
@@ -600,7 +606,7 @@ static sexpr sx_date (sexpr arguments, sexpr *env)
          str_date), sx_end_of_list)), cons (ts, sx_end_of_list)));
 }
 
-static sexpr sx_time (sexpr arguments, sexpr *env)
+static sexpr sx_time (sexpr arguments, struct machine_state *st)
 {
     sexpr ta = car (arguments);
     char s [5], *se;

@@ -1,7 +1,9 @@
 *.o
 html-*
+!data/profiles/html-*
 rtf-*
 txt-*
 build
 local.*
 data/test/comment/*.ksu
+*.swp

@@ -41,7 +41,7 @@ define_string (str_quot,      "\"");
 define_string (str_space,     " ");
 define_string (str_text_html, "text/html");
 
-static sexpr object_xml (sexpr arguments, sexpr *env)
+static sexpr object_xml (sexpr arguments, struct machine_state *st)
 {
     sexpr r = str_nil, t = car (arguments), a;
     char have_content = 0, symbol_t = 0;
@@ -96,7 +96,7 @@ static sexpr object_xml (sexpr arguments, sexpr *env)
                 r = sx_join (r, str_gt, str_nil);
             }
 
-            r = sx_join (r, object_xml (a, env), str_nil);
+            r = sx_join (r, object_xml (a, st), str_nil);
             have_content = 1;
         }
         else if (stringp (a))
@@ -128,7 +128,7 @@ static sexpr object_xml (sexpr arguments, sexpr *env)
     return r;
 }
 
-static sexpr object_sgml (sexpr arguments, sexpr *env)
+static sexpr object_sgml (sexpr arguments, struct machine_state *st)
 {
     sexpr r = str_nil, t = car (arguments), a;
     char have_content = 0, symbol_t = 0;
@@ -183,7 +183,7 @@ static sexpr object_sgml (sexpr arguments, sexpr *env)
                 r = sx_join (r, str_gt, str_nil);
             }
 
-            r = sx_join (r, object_sgml (a, env), str_nil);
+            r = sx_join (r, object_sgml (a, st), str_nil);
             have_content = 1;
         }
         else if (stringp (a))
@@ -215,11 +215,13 @@ static sexpr object_sgml (sexpr arguments, sexpr *env)
     return r;
 }
 
-static sexpr object (sexpr arguments, sexpr *env)
+static sexpr object (sexpr arguments, struct machine_state *st)
 {
-    return truep (equalp (lx_environment_lookup (*env, sym_format),
-                          str_text_html)) ? object_sgml (arguments, env)
-                                          : object_xml (arguments, env);
+    sexpr env = st->environment;
+
+    return truep (equalp (lx_environment_lookup (env, sym_format),
+                          str_text_html)) ? object_sgml (arguments, st)
+                                          : object_xml (arguments, st);
 }
 
 int cmain ()
