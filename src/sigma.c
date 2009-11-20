@@ -206,7 +206,7 @@ static void include_on_read (sexpr sx, struct sexpr_io *io, void *aux)
         if (truep (equalp (sym_object, n)))
         {
             (*(td->data)) =
-                    cons (lx_eval (sx, (td->environment)), (*(td->data)));
+                    cons (lx_eval (cdr (sx), (td->environment)), (*(td->data)));
         }
         else
         {
@@ -332,12 +332,9 @@ static sexpr menu (sexpr arguments, struct machine_state *st)
     sexpr env = st->environment;
     sexpr sx = sx_end_of_list, title;
 
-    title     = car (arguments),
-    arguments = cdr (arguments);
-
     if (eolp (arguments))
     {
-        return include_menu (title, env);
+        return include_menu (str_menu, env);
     }
 
     title     = car (arguments);
