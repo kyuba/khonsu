@@ -1,0 +1,9 @@
+#!/bin/sh
+
+export PATH=build/bin:$PATH
+export KHONSU_SOCKET="khonsu-test-socket"
+export PATH_INFO="$1"
+export HTTP_ACCEPT_LANGUAGE="en"
+export HTTP_ACCEPT="text/html, image/jpeg, image/png, text/*, image/*, */*"
+
+khonsu-cgi

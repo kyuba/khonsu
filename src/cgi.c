@@ -110,7 +110,7 @@ static void write_content_length (unsigned long len)
 
     k = len;
 
-    while (k > 10)
+    while (k >= 10)
     {
         b[l] = ('0' + (k % 10));
         k /= 10;
