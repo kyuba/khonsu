@@ -2,3 +2,6 @@
 (request 1 (get #v "index.xhtml"))
 (request (15267512 . 17521762157) (get #v "index.xhtml"))
 (request (10 . 17521762157) (get #v "index.xhtml"))
+
+(reply (10) (post (ε (comment:target . "test") (comment:text . "Message") (request-body-type . "application/x-www-form-urlencoded") (accept-language . "en") (accept . "text/html, image/jpeg, image/png, text/*, image/*, */*") (user-agent . "Mozilla/5.0 (compatible; Konqueror/3.5) KHTML/3.5.7 (like Gecko)") (comment:name . "Anonymous") (comment:source . "test")) "comment"))
+
