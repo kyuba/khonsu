@@ -64,10 +64,12 @@ static void sx_stdio_read (sexpr sx, struct sexpr_io *io, void *aux)
 
 static sexpr reply (sexpr arguments, struct machine_state *st)
 {
-    sexpr rv = sx_end_of_list;
-    sexpr menv = st->environment;
+    define_string (str_sb, "");
+    sexpr rv = sx_end_of_list, re = lx_make_environment(sx_end_of_list), sv,
+          menv = st->environment, rp, tag = car (arguments);
     struct stdio_list *l = kho_stdio_list;
-    sexpr rp, tag = car (arguments);
+
+    sv = str_sb;
 
     arguments = cdr (arguments);
 
@@ -77,36 +79,76 @@ static sexpr reply (sexpr arguments, struct machine_state *st)
         if (environmentp (a))
         {
             menv = lx_environment_join (menv, a);
-            rv = cons (a, rv);
+            re = lx_environment_join (re, a);
         }
-        else
+        else if (stringp (a))
         {
-            sexpr r = lx_eval (a, menv);
-            if (consp (r))
+            sv = sx_join (sv, a, sx_nonexistent);
+        }
+        else if (consp (a))
+        {
+            sexpr r = car (a);
+
+            if (environmentp (r))
             {
-                sexpr ra = car (r);
-                if (environmentp (ra))
+                menv = lx_environment_join (menv, r);
+                re   = lx_environment_join (re,   r);
+
+                rv = cons (cdr (a), rv);
+            }
+            else if (symbolp (r))
+            {
+                sexpr ra = lx_environment_lookup (menv, r);
+                if (nexp (ra))
                 {
-                    rv = cons (ra, rv);
-                    for (r = cdr (r); consp (r); r = cdr (r))
-                    {
-                        rv = cons (car (r), rv);
-                    }
+                    rv = cons (a, rv);
                 }
                 else
                 {
-                    rv = cons (r, rv);
+                    sexpr ra;
+                    r = lx_eval (a, menv);
+
+                    ra = car (r);
+
+                    if (environmentp (ra))
+                    {
+                        while (consp (r))
+                        {
+                            ra = car (r);
+
+                            if (environmentp (ra))
+                            {
+                                menv = lx_environment_join (menv, ra);
+                                re   = lx_environment_join (re,   ra);
+                            }
+                            else
+                            {
+                                rv = cons (ra, rv);
+                            }
+
+                            r = cdr (r);
+                        }
+                    }
+                    else
+                    {
+                        rv = cons (r, rv);
+                    }
                 }
             }
             else
             {
-                rv = cons (r, rv);
+                rv = cons (lx_eval (a, menv), rv);
             }
         }
+        else
+        {
+            rv = cons (a, rv);
+        }
+
         arguments = cdr (arguments);
     }
 
-    rp = cons (sym_reply, cons (tag, sx_reverse (rv)));
+    rp = cons (sym_reply, cons (tag, cons (re, cons (sv, sx_reverse (rv)))));
 
     while (l != (struct stdio_list *)0)
     {
@@ -119,13 +161,13 @@ static sexpr reply (sexpr arguments, struct machine_state *st)
         cexit (0);
     }
 
-    return sx_nonexistent;
+    return sx_end_of_list;
 }
 
 static sexpr request (sexpr arguments, struct machine_state *st)
 {
     relay_sub (arguments);
-    return sx_nonexistent;
+    return sx_end_of_list;
 }
 
 static sexpr verbatim (sexpr arguments, struct machine_state *st)
@@ -222,7 +264,7 @@ static sexpr configure (sexpr arguments, struct machine_state *st)
         s = 1;
     }
 
-    return sx_nonexistent;
+    return sx_end_of_list;
 }
 
 static void ik_on_read (sexpr sx, struct sexpr_io *io, void *aux)

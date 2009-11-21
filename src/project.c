@@ -300,7 +300,7 @@ static sexpr request (sexpr arguments, struct machine_state *st)
     }
 
     relay_sub (sx_reverse (r));
-    return sx_nonexistent;
+    return sx_end_of_list;
 }
 
 int cmain ()
