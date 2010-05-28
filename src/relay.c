@@ -29,9 +29,10 @@
 #include <khonsu/khonsu.h>
 #include <seteh/lambda.h>
 #include <curie/exec.h>
-#include <curie/shell.h>
 #include <curie/main.h>
 #include <curie/multiplex.h>
+
+#include <sievert/shell.h>
 
 static struct sexpr_io *sxio = (struct sexpr_io *)0;
 

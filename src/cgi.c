@@ -385,8 +385,6 @@ int cmain ()
     char c;
     sexpr env;
 
-    terminate_on_allocation_errors ();
-
     script_name = str_index;
 
     multiplex_io ();

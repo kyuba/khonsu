@@ -305,8 +305,6 @@ static sexpr request (sexpr arguments, struct machine_state *st)
 
 int cmain ()
 {
-    terminate_on_allocation_errors ();
-
     kho_configure_callback = configure_callback;
 
     initialise_khonsu ();

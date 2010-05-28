@@ -17,7 +17,7 @@
   (version "1")
   (url "http://kyuba.org/")
 
-  (libraries "khonsu" "seteh")
+  (libraries "khonsu" "seteh" "sievert")
 
   (code "backend"))
 
@@ -27,7 +27,7 @@
   (version "1")
   (url "http://kyuba.org/")
 
-  (libraries "khonsu" "seteh")
+  (libraries "khonsu" "seteh" "sievert")
 
   (code "server")
 
@@ -40,7 +40,7 @@
   (version "1")
   (url "http://kyuba.org/")
 
-  (libraries "khonsu" "seteh")
+  (libraries "khonsu" "seteh" "sievert")
 
   (code "tao"))
 
@@ -50,7 +50,7 @@
   (version "1")
   (url "http://kyuba.org/")
 
-  (libraries "khonsu" "seteh")
+  (libraries "khonsu" "seteh" "sievert")
 
   (code "xmlise"))
 
@@ -60,7 +60,7 @@
   (version "1")
   (url "http://kyuba.org/")
 
-  (libraries "khonsu" "seteh")
+  (libraries "khonsu" "seteh" "sievert")
 
   (code "i18n"))
 
@@ -70,7 +70,7 @@
   (version "1")
   (url "http://kyuba.org/")
 
-  (libraries "khonsu" "seteh")
+  (libraries "khonsu" "seteh" "sievert")
 
   (code "sigma"))
 
@@ -80,7 +80,7 @@
   (version "1")
   (url "http://kyuba.org/")
 
-  (libraries "khonsu" "seteh")
+  (libraries "khonsu" "seteh" "sievert")
 
   (code "project"))
 
@@ -90,7 +90,7 @@
   (version "1")
   (url "http://kyuba.org/")
 
-  (libraries "khonsu" "seteh")
+  (libraries "khonsu" "seteh" "sievert")
 
   (code "comment"))
 
@@ -100,6 +100,6 @@
   (version "1")
   (url "http://kyuba.org/")
 
-  (libraries "seteh" "khonsu")
+  (libraries "seteh" "khonsu" "sievert")
 
   (code "cgi"))

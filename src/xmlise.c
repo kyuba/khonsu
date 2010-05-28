@@ -226,8 +226,6 @@ static sexpr object (sexpr arguments, struct machine_state *st)
 
 int cmain ()
 {
-    terminate_on_allocation_errors ();
-
     initialise_khonsu ();
 
     kho_environment = lx_environment_unbind (kho_environment, sym_object);

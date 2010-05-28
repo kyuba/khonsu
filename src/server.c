@@ -53,8 +53,6 @@ static void configure_callback (sexpr sx)
 
 int cmain ()
 {
-    terminate_on_allocation_errors ();
-
     kho_configure_callback = configure_callback;
 
     initialise_khonsu ();

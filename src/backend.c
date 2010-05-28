@@ -379,8 +379,6 @@ static sexpr get (sexpr arguments, struct machine_state *st)
 
 int cmain ()
 {
-    terminate_on_allocation_errors ();
-
     mime_map = lx_make_environment (sx_end_of_list);
 
     gc_add_root (&mime_map);
