@@ -28,6 +28,7 @@
 
 #include <khonsu/khonsu.h>
 #include <seteh/lambda.h>
+#include <sievert/sexpr.h>
 #include <curie/multiplex.h>
 #include <curie/memory.h>
 #include <curie/filesystem.h>
@@ -285,7 +286,7 @@ static sexpr menu_selected_environment (sexpr a, sexpr b)
     if ((as[i] == bs[j]) && (as[i] == (char)0))
     {
         e  = lx_make_environment
-                (cons (cons (sym_class, str_selected), sx_end_of_list));
+                (sx_list1 (cons (sym_class, str_selected)));
     }
     else
     {
@@ -313,18 +314,22 @@ static sexpr sub_menu (sexpr arguments, struct machine_state *st)
         e = menu_selected_environment
                 (target, lx_environment_lookup (env, sym_base_name));
 
-        sx = cons (cons (sym_item, cons (e, cons (cons (sym_link, cons
-                (lx_make_environment (cons (cons (sym_href, (nexp (ext) ? target
-                 : sx_join (target, str_dot, ext))),
-                 sx_end_of_list)), cons (name,
-                 sx_end_of_list))), sx_end_of_list))), sx);
+        target = nexp (ext) ? target : sx_join (target, str_dot, ext);
+
+        sx = cons
+               (sx_list3
+                 (sym_item, e,
+                  sx_list3 (sym_link,
+                            lx_make_environment
+                              (sx_list1 (cons (sym_href, target))),
+                            name)),
+                sx);
 
         arguments = cdr (arguments);
     }
 
-    return cons (cons (sym_sub_section, cons (title,
-                 cons (cons (sym_list, sx_reverse (sx)), sx_end_of_list))),
-                       sx_end_of_list);
+    return sx_list3 (sym_sub_section, title,
+                     sx_list1 (cons(sym_list, sx_reverse(sx))));
 }
 
 static sexpr menu (sexpr arguments, struct machine_state *st)
@@ -352,9 +357,11 @@ static sexpr menu (sexpr arguments, struct machine_state *st)
         arguments = cdr (arguments);
     }
 
-    return cons (sym_wrap, cons (lx_make_environment (cons (cons (sym_id,
-             str_menu), sx_end_of_list)), cons (cons (sym_section, cons (title,
-             cons (sx_reverse (sx), sx_end_of_list))), sx_end_of_list)));
+    return sx_list3
+             (sym_wrap,
+              lx_make_environment
+                (sx_list1 (cons (sym_id, str_menu))),
+              sx_list3 (sym_section, title, sx_reverse (sx)));
 }
 
 static sexpr include_contact (sexpr file, sexpr env)
@@ -367,7 +374,7 @@ static sexpr include_contact (sexpr file, sexpr env)
         return include_file (fn, env);
     }
 
-    return cons (sym_contact, cons (file, sx_end_of_list));
+    return sx_list2 (sym_contact, file);
 }
 
 static sexpr contact_elaborate (sexpr args, struct machine_state *st)
@@ -413,25 +420,31 @@ static sexpr contact_elaborate (sexpr args, struct machine_state *st)
 
     te = lx_environment_join (kho_environment, env);
 
-/*    cons (sym_tr, cons (sx_join (fn, str_space, ln), cons (sdesc, cons (cons
-           (sym_image, cons (icon, sx_end_of_list)), sx_end_of_list)))),*/
+    return lx_eval
+             (sx_list2
+                (sym_object,
+                 sx_list4
+                   (sym_document, str_Contact,
+                    sx_list1 (sym_menu),
+                    sx_list2
+                      (sym_table,
+                       sx_list4
+                         (sym_tbody,
+                          sx_list3
+                            (sym_tr,
+                             sx_list2 (sym_th, sym_trContactName),
+                             sx_list2 (sym_td, sx_join (fn, str_space, ln))),
+                          sx_list3
+                            (sym_tr,
+                             sx_list2 (sym_th, sym_trDescription),
+                             sx_list2 (sym_td, sdesc)),
+                          sx_list3
+                            (sym_tr,
+                             sx_list2 (sym_th, sym_trIcon),
+                             sx_list2 (sym_td,
+                                       sx_list2 (sym_image, icon))))))),
 
-    return lx_eval (cons (sym_object, cons (cons (sym_document, cons
-        (str_Contact, cons (cons (sym_menu, sx_end_of_list), cons(cons
-        (sym_table, cons (cons (sym_tbody,
-     cons (
-        cons (sym_tr, cons (cons (sym_th, cons (sym_trContactName,
-              sx_end_of_list)), cons (cons (sym_td, cons (sx_join (fn,
-              str_space, ln), sx_end_of_list)), sx_end_of_list))),
-        cons (cons (sym_tr, cons (cons (sym_th, cons (sym_trDescription,
-              sx_end_of_list)), cons (cons (sym_td, cons (sdesc,
-              sx_end_of_list)), sx_end_of_list))),
-        cons (cons (sym_tr, cons (cons (sym_th, cons (sym_trIcon,
-              sx_end_of_list)), cons (cons (sym_td, cons (cons(sym_image, cons
-              (icon, sx_end_of_list)), sx_end_of_list)), sx_end_of_list))),
-        sx_end_of_list)))),
-        sx_end_of_list)), sx_end_of_list)))), sx_end_of_list)),
-     te);
+              te);
 }
 
 static sexpr contact (sexpr args, struct machine_state *st)
@@ -485,14 +498,18 @@ static sexpr contact (sexpr args, struct machine_state *st)
 
         te = lx_environment_join (kho_environment, env);
 
-        return lx_eval (cons (sym_object, cons (cons (sym_icon,
-                 cons (sx_join (str_contact_dash, n,
-                       (nexp (ext) ? str_nil
-                                   : sx_join (str_dot, ext, str_nil))),
-                 cons (sx_join (fn, str_space, ln),
-                 cons (icon,
-                 cons (sdesc, sx_end_of_list))))),
-                 sx_end_of_list)), te);
+        return lx_eval
+                 (sx_list2
+                    (sym_object,
+                     sx_list5 (sym_icon,
+                              sx_join (str_contact_dash, n,
+                                        (nexp (ext)
+                                           ? str_nil
+                                           : sx_join (str_dot, ext, str_nil))),
+                              sx_join (fn, str_space, ln),
+                              icon,
+                              sdesc)),
+                  te);
     }
 }
 
@@ -517,7 +534,7 @@ static sexpr request (sexpr arguments, struct machine_state *st)
             else
             {
                 te = lx_make_environment
-                    (cons (cons (sym_elaborate, sx_true), sx_end_of_list));
+                    (sx_list1 (cons (sym_elaborate, sx_true)));
             }
 
             if ((etarget[0]=='c') && (etarget[1]=='o') && (etarget[2]=='n') &&
@@ -525,7 +542,7 @@ static sexpr request (sexpr arguments, struct machine_state *st)
                 (etarget[6]=='t') && (etarget[7]=='-'))
             {
                 a2 = sx_join (str_contact_slash,make_string(etarget+8),str_nil);
-                r = cons (cons(sym_get,cons (te,cons (a2, sx_end_of_list))),r);
+                r = cons (sx_list3 (sym_get, te, a2), r);
             }
             else
             {
@@ -599,8 +616,10 @@ static sexpr sx_date (sexpr arguments, struct machine_state *st)
                   sx_join (make_string (se), str_space,
                            haab_day_names[(i / 20)]));
 
-    return cons (sym_div, cons (lx_make_environment (cons (cons (sym_class,
-         str_date), sx_end_of_list)), cons (ts, sx_end_of_list)));
+    return sx_list3
+             (sym_div,
+              lx_make_environment (sx_list1 (cons (sym_class, str_date))),
+              ts);
 }
 
 static sexpr sx_time (sexpr arguments, struct machine_state *st)
@@ -618,8 +637,10 @@ static sexpr sx_time (sexpr arguments, struct machine_state *st)
     se = (s[0]  == '0') ? (s  + 1) : s;
     se = (se[0] == '0') ? (se + 1) : se;
 
-    return cons (sym_div, cons (lx_make_environment (cons (cons (sym_class,
-         str_time), sx_end_of_list)), cons (make_string (se), sx_end_of_list)));
+    return sx_list3
+             (sym_div,
+              lx_make_environment (sx_list1 (cons (sym_class, str_time))),
+              make_string (se));
 }
 
 int cmain ()
