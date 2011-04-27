@@ -2,7 +2,7 @@
   (name "Khonsu")
   (description "Web Framework")
   (version "1")
-  (url "http://kyuba.org/")
+  (url "http://becquerel.org/")
 
   (code "khonsu" "relay" "util")
 
@@ -15,7 +15,7 @@
   (name "Khonsu Server")
   (description "Basic Server")
   (version "1")
-  (url "http://kyuba.org/")
+  (url "http://becquerel.org/")
 
   (libraries "khonsu" "seteh" "sievert")
 
@@ -25,7 +25,7 @@
   (name "Khonsu Server")
   (description "Basic Server")
   (version "1")
-  (url "http://kyuba.org/")
+  (url "http://becquerel.org/")
 
   (libraries "khonsu" "seteh" "sievert")
 
@@ -38,7 +38,7 @@
   (name "Tao")
   (description "XHTML Output")
   (version "1")
-  (url "http://kyuba.org/")
+  (url "http://becquerel.org/")
 
   (libraries "khonsu" "seteh" "sievert")
 
@@ -48,7 +48,7 @@
   (name "XML-ise")
   (description "S-Expression to XML Converter")
   (version "1")
-  (url "http://kyuba.org/")
+  (url "http://becquerel.org/")
 
   (libraries "khonsu" "seteh" "sievert")
 
@@ -58,7 +58,7 @@
   (name "I18n")
   (description "Khonsu Internationalisation Support")
   (version "1")
-  (url "http://kyuba.org/")
+  (url "http://becquerel.org/")
 
   (libraries "khonsu" "seteh" "sievert")
 
@@ -68,7 +68,7 @@
   (name "Sigma")
   (description "XML/XHTML goodies")
   (version "1")
-  (url "http://kyuba.org/")
+  (url "http://becquerel.org/")
 
   (libraries "khonsu" "seteh" "sievert")
 
@@ -78,7 +78,7 @@
   (name "Khonsu Projects")
   (description "Software Project Management")
   (version "1")
-  (url "http://kyuba.org/")
+  (url "http://becquerel.org/")
 
   (libraries "khonsu" "seteh" "sievert")
 
@@ -88,17 +88,27 @@
   (name "Khonsu Comments")
   (description "Allows adding comments to served pages")
   (version "1")
-  (url "http://kyuba.org/")
+  (url "http://becquerel.org/")
 
   (libraries "khonsu" "seteh" "sievert")
 
   (code "comment"))
 
+(programme "colourise" libcurie
+  (name "colouri.se Main Programme")
+  (description "Contains additional elements for colour scheme manipulation.")
+  (version "1")
+  (url "http://colouri.se/")
+
+  (libraries "khonsu" "seteh" "sievert")
+
+  (code "colourise"))
+
 (programme "khonsu-cgi" libcurie
   (name "Khonsu CGI")
   (description "CGI Interface for Khonsu")
   (version "1")
-  (url "http://kyuba.org/")
+  (url "http://becquerel.org/")
 
   (libraries "seteh" "khonsu" "sievert")
 

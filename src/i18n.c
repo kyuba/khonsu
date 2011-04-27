@@ -93,6 +93,12 @@ static sexpr get_acceptable_languages (sexpr lq)
                         if (lqsm[i] == 0) break;
                         i++;
                     }
+
+                    if (lqsm[i] == 0)
+                    {
+                        il = i;
+                        break;
+                    }
                 }
 
                 i++;

@@ -319,3 +319,11 @@ form#comment input[type=submit]
     width: 180px;
     cursor: default;
 }
+
+span.colour-box
+{
+    display: inline-block;
+    width: 4em;
+    height: 3em;
+    border: 1px solid black;
+}

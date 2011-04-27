@@ -31,18 +31,19 @@
 #include <sievert/sexpr.h>
 #include <curie/multiplex.h>
 #include <curie/memory.h>
-#include <curie/filesystem.h>
-#include <curie/time.h>
 #include <curie/gc.h>
 
-/*
-define_symbol (sym_elaborate,                  "elaborate");
+define_string (str_colour_box,      "colour-box");
+define_string (str_colour_dash,     "colour-");
+define_string (str_colour_rgb_dash, "colour-rgb-");
+define_string (str_zero,            "0");
 
-define_string (str_contact_dash,               "contact-");
-define_string (str_contact_slash,              "contact/");
-*/
+define_symbol (sym_colour_box_rgb,  "colour-box-rgb");
+define_symbol (sym_span,            "span");
+define_symbol (sym_style,           "style");
+define_symbol (sym_class,           "class");
 
-static sexpr webroot          = sx_nonexistent;
+static sexpr webroot = sx_nonexistent;
 
 static void configure_callback (sexpr sx)
 {
@@ -54,52 +55,78 @@ static void configure_callback (sexpr sx)
     }
 }
 
-static sexpr request (sexpr arguments, struct machine_state *st)
+static sexpr colour_scale (sexpr c, unsigned int max)
 {
-    sexpr a = arguments, r = sx_end_of_list, a2, a3;
+    double n, d, m = max;
+    unsigned int r;
 
-    while (consp (a))
+    if (integerp (c)) /* convert to rational by assuming the denominator is 1 */
     {
-        a2 = car (a);
-        a3 = car (a2);
-
-        if (truep (equalp (a3, sym_get)))
-        {
-            sexpr t1 = cdr (a2), te = car (t1), t2 = cdr (t1), target = car(t2);
-            const char *etarget = sx_string (target);
-
-/*            if (environmentp (te))
-            {
-                te = lx_environment_bind (te, sym_elaborate, sx_true);
-            }
-            else
-            {
-                te = lx_make_environment
-                    (sx_list1 (cons (sym_elaborate, sx_true)));
-            }*/
-
-/*            if ((etarget[0]=='c') && (etarget[1]=='o') && (etarget[2]=='n') &&
-                (etarget[3]=='t') && (etarget[4]=='a') && (etarget[5]=='c') &&
-                (etarget[6]=='t') && (etarget[7]=='-'))
-            {
-                a2 = sx_join (str_contact_slash,make_string(etarget+8),str_nil);
-                r = cons (sx_list3 (sym_get, te, a2), r);
-            }
-            else*/
-            {
-                r = cons (a2, r);
-            }
-        }
-        else
-        {
-            r = cons (a2, r);
-        }
-
-        a = cdr (a);
+        n = sx_integer (c);
+        d = 1.0;
+    }
+    else
+    {
+        n = sx_numerator   (c);
+        d = sx_denominator (c);
     }
 
-    relay_sub (sx_reverse (r));
-    return sx_nonexistent;
+    r = n / d * m;
+
+    return make_integer (r);
+}
+
+static sexpr rgb_to_html (sexpr r, sexpr g, sexpr b)
+{
+    const char *s;
+    define_string (str_hash, "#");
+
+    r = colour_scale (r, 255);
+    g = colour_scale (g, 255);
+    b = colour_scale (b, 255);
+
+    r = sx_integer_to_string_hex (sx_integer (r));
+    g = sx_integer_to_string_hex (sx_integer (g));
+    b = sx_integer_to_string_hex (sx_integer (b));
+
+    if ((s = sx_string (r)), (s[1] == 0))
+    {
+        r = sx_join (str_zero, r, sx_nil);
+    }
+    if ((s = sx_string (g)), (s[1] == 0))
+    {
+        g = sx_join (str_zero, g, sx_nil);
+    }
+    if ((s = sx_string (b)), (s[1] == 0))
+    {
+        b = sx_join (str_zero, b, sx_nil);
+    }
+
+    return sx_join (str_hash,
+                    sx_join (r, g, b),
+                    str_nil);
+}
+
+static sexpr colour_box_rgb (sexpr arguments, struct machine_state *st)
+{
+    define_string (str_bcc, "background-color:");
+
+    sexpr r, g, b, v;
+
+    r         = car (arguments);
+    arguments = cdr (arguments);
+    g         = car (arguments);
+    arguments = cdr (arguments);
+    b         = car (arguments);
+
+    v         = rgb_to_html (r, g, b);
+
+    return sx_list3 (sym_span,
+                     lx_make_environment
+                       (sx_list2 (cons (sym_class, str_colour_box),
+                                  cons (sym_style,
+                                        sx_join (str_bcc, v, str_nil)))),
+                     v);
 }
 
 int cmain ()
@@ -109,7 +136,8 @@ int cmain ()
     initialise_khonsu ();
 
     kho_environment = lx_environment_bind
-      (kho_environment, sym_request, lx_foreign_lambda (sym_request, request));
+      (kho_environment, sym_colour_box_rgb,
+       lx_foreign_lambda (sym_colour_box_rgb, colour_box_rgb));
 
     while (multiplex () != mx_nothing_to_do)
     {

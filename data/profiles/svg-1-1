@@ -1,0 +1,12 @@
+(tao:map-extension "svg"     "image/svg+xml")
+(tao:map-extension "svg-1"   "image/svg+xml")
+(tao:map-extension "svg-1-1" "image/svg+xml")
+
+(tao:transform
+  (tao:match format . "image/svg\\+xml")
+
+  (tao:replace
+     ("document") .
+     ("<?xml version=\"1.0\" encoding=\"utf-8\" ?><!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">"
+      (svg (ε (xmlns . "http://www.w3.org/2000/svg") (version . "1.1"))
+           (tao:tail 2)))))

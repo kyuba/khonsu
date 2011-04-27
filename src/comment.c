@@ -53,7 +53,6 @@ define_symbol (sym_wrap,             "wrap");
 define_symbol (sym_form,             "form");
 define_symbol (sym_name,             "name");
 define_symbol (sym_post,             "post");
-define_symbol (sym_div,              "div");
 define_symbol (sym_comment_added,    "comment-added");
 define_symbol (sym_base_name,        "base-name");
 define_symbol (sym_date,             "date");
