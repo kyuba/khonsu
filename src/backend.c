@@ -28,6 +28,7 @@
 
 #include <khonsu/khonsu.h>
 #include <seteh/lambda.h>
+#include <sievert/sexpr.h>
 #include <curie/multiplex.h>
 #include <curie/memory.h>
 #include <curie/filesystem.h>
@@ -116,6 +117,12 @@ static sexpr get_acceptable_types (sexpr lq)
                     {
                         if (lqsm[i] == 0) break;
                         i++;
+                    }
+
+                    if (lqsm[i] == 0)
+                    {
+                        il = i;
+                        break;
                     }
                 }
 
@@ -377,6 +384,109 @@ static sexpr get (sexpr arguments, struct machine_state *st)
     return r;
 }
 
+static sexpr pong (sexpr arguments, struct machine_state *st)
+{
+    sexpr e = car (arguments), r, tf, v, ex, bn, on;
+
+    if (!environmentp (e))
+    {
+        e = lx_make_environment (sx_end_of_list);
+        r = arguments;
+    }
+    else
+    {
+        r = cdr (arguments);
+    }
+
+    on = lx_environment_lookup (e, sym_original_name);
+    ex = lx_environment_lookup (e, sym_extension);
+    bn = lx_environment_lookup (e, sym_base_name);
+
+    if (!nexp (on) && (nexp (ex) || nexp (bn)))
+    {
+        const char *ts = sx_string (on);
+        char *tmp;
+        int len = 0, i = 0;
+
+        while (ts[len] != (char)0)
+        {
+            if (ts[len] == '.') i = len;
+            len++;
+        }
+
+        if (i > 0)
+        {
+            len = i;
+            tmp = aalloc (len + 1);
+            for (i = 0; i < len; i++)
+            {
+                tmp[i] = ts[i];
+            }
+            tmp[i] = 0;
+            i++;
+
+            bn = make_string (tmp);
+            ex = make_string (ts + i);
+
+            afree (i, tmp);
+
+            if (!nexp (bn))
+            {
+                lx_environment_unbind (e, sym_base_name);
+            }
+            if (!nexp (ex))
+            {
+                lx_environment_unbind (e, sym_extension);
+            }
+
+            e = lx_environment_bind (e, sym_base_name, bn);
+            e = lx_environment_bind (e, sym_extension, ex);
+        }
+        else
+        {
+            e = lx_environment_bind (e, sym_base_name, on);
+        }
+    }
+
+    tf = lx_environment_lookup (e, sym_format);
+    if (nexp (tf))
+    {
+        tf = lx_environment_lookup (mime_map, ex);
+        if (nexp (tf))
+        {
+            tf = lx_environment_lookup (e, sym_accept);
+
+            if (!nexp (tf))
+            {
+                tf = get_acceptable_type (tf);
+            }
+            else
+            {
+                tf = default_type;
+            }
+
+            v = lx_environment_lookup (e, sym_Vary);
+
+            if (!nexp (v))
+            {
+                e = lx_environment_unbind (e, sym_Vary);
+                e = lx_environment_bind
+                        (e, sym_Vary,
+                         sx_join (v, str_cAccept, sx_end_of_list));
+            }
+            else
+            {
+                e = lx_environment_bind
+                        (e, sym_Vary, str_Accept);
+            }
+        }
+
+        e = lx_environment_bind (e, sym_format, tf);
+    }
+
+    return sx_list2 (e, r);
+}
+
 int cmain ()
 {
     mime_map = lx_make_environment (sx_end_of_list);
@@ -389,6 +499,8 @@ int cmain ()
 
     kho_environment = lx_environment_bind
             (kho_environment, sym_get, lx_foreign_lambda (sym_get, get));
+    kho_environment = lx_environment_bind
+            (kho_environment, sym_pong, lx_foreign_lambda (sym_pong, pong));
     kho_environment = lx_environment_bind
             (kho_environment, sym_include,
              lx_foreign_lambda (sym_include, include));

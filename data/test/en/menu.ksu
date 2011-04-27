@@ -3,6 +3,8 @@
         ("Main Content"
           ("index"        "Home")
           ("test"         "Test")
-          ("contact-test" "Dummy Contact"))
+          ("contact-test" "Dummy Contact")
+          ("rgb-map(1,0,0)(1,1,0)(0,1,0)(0,1,1)(0,0,1)(1,0,1)"
+                          "Example RGB Map"))
         ("Projects"
           ("project-khonsu" "Khonsu"))))

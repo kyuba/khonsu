@@ -65,6 +65,7 @@ define_symbol (sym_request,                  "request");
 define_symbol (sym_reply,                    "reply");
 define_symbol (sym_configure,                "configure");
 define_symbol (sym_get,                      "get");
+define_symbol (sym_pong,                     "pong");
 define_symbol (sym_object,                   "object");
 define_symbol (sym_debug,                    "debug");
 define_symbol (sym_file_not_found,           "file-not-found");
