@@ -5,6 +5,8 @@
           ("test"         "Test")
           ("contact-test" "Dummy Contact")
           ("rgb-map(1,0,0)(1,1,0)(0,1,0)(0,1,1)(0,0,1)(1,0,1)"
-                          "Example RGB Map"))
+                          "Example RGB Map")
+          ("analogue-clock(43200,3600,60)"
+                          "Example Analogue Clock"))
         ("Projects"
           ("project-khonsu" "Khonsu"))))

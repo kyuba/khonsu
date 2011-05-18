@@ -104,6 +104,16 @@
 
   (code "colourise"))
 
+(programme "synchronise" libcurie
+  (name "syn.chroni.se Main Programme")
+  (description "Contains additional elements for date and time manipulation.")
+  (version "1")
+  (url "http://syn.chroni.se/")
+
+  (libraries "khonsu" "seteh" "sievert")
+
+  (code "synchronise"))
+
 (programme "khonsu-cgi" libcurie
   (name "Khonsu CGI")
   (description "CGI Interface for Khonsu")
