@@ -29,6 +29,7 @@
 #include <khonsu/khonsu.h>
 #include <seteh/lambda.h>
 #include <sievert/sexpr.h>
+#include <sievert/time.h>
 #include <curie/multiplex.h>
 #include <curie/memory.h>
 #include <curie/gc.h>
@@ -85,8 +86,9 @@ define_string (str_hc,              "#c");
 define_string (str_rotate_pre,      "rotate(");
 define_string (str_rotate_post,     ",500,500)");
 define_string (str_scale_pre,       "translate(");
-define_string (str_scale_mid,       ") scale(");
-define_string (str_scale_post,      ")");
+define_string (str_scale_mid1,      ") scale(");
+define_string (str_scale_mid2,      ") rotate(");
+define_string (str_scale_post,      " 500 500)");
 define_string (str_comma,           ",");
 define_string (str_rot0,            "0 500 500");
 define_string (str_rot360,          "360 500 500");
@@ -146,12 +148,13 @@ static sexpr analogue_clock (sexpr arguments, struct machine_state *st)
     {
         int   i, j;
         sexpr c = car (arguments);
-        sexpr day_len   = make_integer ((24 * 60 * 60));
-        sexpr ticks     = make_integer (12);
-        sexpr sub_ticks = make_integer (5);
+        sexpr day_len     = make_integer ((24 * 60 * 60));
+        sexpr ticks       = make_integer (12);
+        sexpr sub_ticks   = make_integer (5);
+        unsigned int ct   = dt_get_time ();
 
-        sexpr facesvg   = sx_end_of_list;
-        sexpr facedefs  = sx_list5
+        sexpr facesvg     = sx_end_of_list;
+        sexpr facedefs    = sx_list5
             (sx_list2 (sym_line,
                        lx_make_environment
                          (sx_list6 (cons (sym_id, str_c),
@@ -193,7 +196,7 @@ static sexpr analogue_clock (sexpr arguments, struct machine_state *st)
                                     cons (sym_y2, str_50),
                                     cons (sym_style, str_style_a)))));
 
-        sexpr faceg     = sx_list1
+        sexpr faceg       = sx_list1
             (sx_list2 (sym_use, lx_make_environment
                                   (sx_list1 (cons (sym_xlinkchref,
                                                    str_hgi)))));
@@ -202,11 +205,11 @@ static sexpr analogue_clock (sexpr arguments, struct machine_state *st)
 
         if (consp (arguments))
         {
-            day_len   = car (c);
-            c         = cdr (c);
             ticks     = car (c);
             c         = cdr (c);
             sub_ticks = car (c);
+            c         = cdr (c);
+            day_len   = car (c);
 
             if (!integerp (day_len) || (sx_integer(day_len) == 0))
             {
@@ -335,7 +338,7 @@ static sexpr analogue_clock (sexpr arguments, struct machine_state *st)
             sexpr a = car (c);
             int   n = sx_integer (a);
             sexpr d = sx_join (str_nil, a, str_s);
-            sexpr s = str_p2, s2 = str_400;
+            sexpr s = str_p2, s2 = str_400, ro = make_integer(0);
 
             switch (i)
             {
@@ -360,9 +363,13 @@ static sexpr analogue_clock (sexpr arguments, struct machine_state *st)
                     break;
             }
 
+            ro = make_integer(((ct % n) * 360 / n));
+
             s = sx_join (str_scale_pre, s2,
                 sx_join (str_comma, s2,
-                sx_join (str_scale_mid, s, str_scale_post)));
+                sx_join (str_scale_mid1, s,
+                sx_join (str_scale_mid2,
+                         sx_to_string(ro), str_scale_post))));
 
             faceg = cons
                 (sx_list3
