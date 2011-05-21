@@ -262,7 +262,7 @@ static sexpr post (sexpr args, struct machine_state *st)
         struct sexpr_io *io;
         struct datetime dtime;
 
-        dt_get (&dtime);
+        dtime = dt_get ();
 
         if (truep (filep (t)))
         {

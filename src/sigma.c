@@ -570,7 +570,7 @@ static sexpr sx_date (sexpr arguments, struct machine_state *st)
     int i, j;
     int_date it = sx_integer (ta);
 
-    dt_split_kin (it, &dt);
+    dt = dt_split_kin (it);
 
     s[0]  = ((dt.baktun / 10) % 10) + '0';
     s[1]  =  (dt.baktun       % 10) + '0';
