@@ -38,12 +38,18 @@ extern "C" {
 
 #include <curie/sexpr.h>
 
+#define KHO_QUIT               (1<<0)
+#define KHO_IGNORE_QUIT        (1<<1)
+#define KHO_IGNORE_QUIT_RELOAD (1<<2)
+
 extern struct sexpr_io *kho_stdio;
 extern sexpr kho_configuration;
 extern sexpr kho_environment;
 extern void (*kho_configure_callback)(sexpr);
+extern unsigned int kho_options;
 
-void  initialise_khonsu     ();
+void  initialise_khonsu     (void);
+void  kho_load              (void);
 void  kho_debug             (sexpr sx);
 void  kho_configure         (sexpr sx);
 
@@ -75,6 +81,12 @@ define_symbol (sym_language,                 "language");
 define_symbol (sym_map_extension,            "map-extension");
 define_symbol (sym_verbatim,                 "verbatim");
 define_symbol (sym_id,                       "id");
+define_symbol (sym_quit,                     "quit");
+define_symbol (sym_terminate,                "terminate");
+define_symbol (sym_tick,                     "tick");
+define_symbol (sym_reload,                   "reload");
+define_symbol (sym_ok,                       "ok");
+define_symbol (sym_invoke_gc,                "invoke-gc");
 
 define_string (str_nil,                      "");
 
